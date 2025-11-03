@@ -37,3 +37,10 @@ config/blockd-common.toml
 1. 启动一次游戏生成配置文件
 2. 编辑配置文件中的 [maxMobsInChunk](file://E:\mcmod\forge-1.20.1-47.4.0-mdk\src\main\java\com\huntersxy\blockd\Config.java#L25-L25) 值，设置允许的最大生物数量，默认为10
 3. 保存文件并重启游戏，配置将生效
+
+
+## 许可证
+
+本模组采用 MIT 许可证 - 详情请参见 [LICENSE](LICENSE.txt) 文件。
+
+本模组使用了 Minecraft Forge，其采用 LGPL 2.1 许可证。更多信息请参见 [Forge 的许可证](https://github.com/MinecraftForge/MinecraftForge/blob/main/LICENSE.txt)。
