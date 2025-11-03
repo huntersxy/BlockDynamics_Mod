@@ -1,5 +1,6 @@
 {
   "item.blockd.test": "测试物品,打死生物后会爆炸",
   "item.blockd.test.desc": "这是一个测试物品",
-  "block.blockd.givetag_block": "实体冻结器"
+  "block.blockd.givetag_block": "实体冻结器",
+  "itemGroup.custom_tab": "自定义标签页"
 }

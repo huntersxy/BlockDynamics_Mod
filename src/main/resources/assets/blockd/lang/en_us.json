@@ -1,3 +1,6 @@
 {
-  "block.blockd.givetag_block": "Frozen Block"
+  "item.blockd.test": "Test Item, explodes when killing mobs",
+  "item.blockd.test.desc": "This is a test item",
+  "block.blockd.givetag_block": "Entity Freezer",
+  "itemGroup.custom_tab": "Custom Tab"
 }
