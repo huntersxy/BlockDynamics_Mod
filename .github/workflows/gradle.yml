@@ -1,11 +1,9 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+# 此工作流使用非GitHub认证的Actions
+# 这些Actions由第三方提供，受独立服务条款、隐私政策和支持文档约束
+# 此工作流将使用Gradle构建Java项目，并缓存/恢复依赖以提高执行效率
+# 更多信息参见：https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
 
-name: Java CI with Gradle
+name: Java CI与Gradle构建  # 工作流名称（中文）
 
 on:
   push:
@@ -22,38 +20,41 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 17
+    - name: 配置JDK 17  # 步骤名称（中文）
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Gradle
+    - name: 配置Gradle  # 步骤名称（中文）
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
-    - name: Build with Gradle Wrapper
-      run: ./gradlew build  # 构建项目，生成build/libs下的文件
+    - name: 赋予gradlew可执行权限  # 步骤名称（中文）
+      run: chmod +x ./gradlew
 
-    # 新增步骤：上传build/libs目录下的所有文件
-    - name: Upload build/libs artifacts
-      uses: actions/upload-artifact@v4  # 官方上传产物的Action
+    - name: 使用Gradle Wrapper构建  # 步骤名称（中文）
+      run: ./gradlew build
+
+    - name: 上传build/libs目录产物  # 步骤名称（中文）
+      uses: actions/upload-artifact@v4
       with:
-        name: gradle-build-libs  # 产物名称（自定义，便于识别）
-        path: build/libs/  # 要上传的目录路径（包含该目录下所有文件）
-        if-no-files-found: warn  # 若目录为空，仅警告（不失败）
+        name: gradle构建产物-libs  # 产物名称（中文）
+        path: build/libs/
+        if-no-files-found: warn
 
   dependency-submission:
+
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 17
+    - name: 配置JDK 17  # 步骤名称（中文）
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Generate and submit dependency graph
+    - name: 生成并提交依赖图谱  # 步骤名称（中文）
       uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
