@@ -1,4 +1,3 @@
 {
-  "item.blockd.test": "测试物品,打死生物后会爆炸",
-  "item.blockd.test.desc": "这是一个测试物品"
+  "block.blockd.givetag_block": "Frozen Block"
 }

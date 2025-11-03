@@ -4,17 +4,15 @@ import com.huntersxy.blockd.item.Moditems;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.entity.living.BabyEntitySpawnEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -22,8 +20,8 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
+
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(blockd.MOD_ID)
@@ -43,6 +41,8 @@ public class blockd
 
         // 注册模组物品
         Moditems.register(modEventBus);
+
+
 
 
         // 为我们感兴趣的服务器和其他游戏事件注册自己
@@ -74,25 +74,29 @@ public class blockd
                                 parentAPos.getX() + 8, parentAPos.getY() + 8, parentAPos.getZ() + 8))
                 .size();
 
-
-        // 获取即将出生的子代
-        Mob child = event.getChild();
-        //如果父代区块内 mob 实体数量大于10，则取消繁殖
-        if (parentAEntityCount >  Config.maxMobsInChunk) {
+        // 如果父代区块内 mob 实体数量大于配置值，则取消繁殖
+        if (parentAEntityCount > Config.maxMobsInChunk) {
             event.setCanceled(true);
-            LOGGER.info("阻止了一次繁殖");
+            LOGGER.info("阻止了一次繁殖，当前区块生物数量: {}", parentAEntityCount);
         }
     }
 
 
+@SubscribeEvent
+public void onEntityUpdate(LivingEvent.LivingTickEvent event) {
+    LivingEntity entity = event.getEntity();
+    // 空值检查提高代码健壮性
+    if (entity == null) {
+        return;
+    }
 
-
-
-
-
-
-
-
+    // 先进行类型检查再进行标签检查，提高性能
+    if (entity instanceof Mob mob && entity.getTags().contains("test")) {
+        // 阻止 AI 目标更新
+        mob.goalSelector.tickRunningGoals(false);
+        event.setCanceled(true);
+    }
+}
 
 
 
