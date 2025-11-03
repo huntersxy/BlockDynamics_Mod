@@ -38,9 +38,9 @@ jobs:
     - name: 上传build/libs目录产物  # 步骤名称（中文）
       uses: actions/upload-artifact@v4
       with:
-        name: gradle构建产物-libs  # 产物名称（中文）
-        path: build/libs/*
-        if-no-files-found: warn
+        name: blockd.zip
+        path: build/libs/*.jar      # 匹配libs下所有Jar包（若只有1个，就是目标文件）
+        if-no-files-found: warn     # 无文件时仅警告
 
   dependency-submission:
 

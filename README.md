@@ -7,6 +7,10 @@ BlockDynamics 是一个基于 Minecraft Forge 的模组。
 -  通过监测区块内生物数量来控制生物繁殖，避免特定区域内生物过度密集，提升游戏体验。
 - 新增一个方块-实体冻结器，用于通过红石控制冻结指定区域（7*7）内的生物。
 
+## 获取方法
+
+可自行编译或者通过[Release](https://gihub.com/huntersxy/BlockDynamics_Mod/releases) 页面下载。你也可以从[Github action](https://github.com/huntersxy/BlockDynamics_Mod/actions)中下载最新构建。
+
 ## 核心功能
 
 ### 繁殖限制
