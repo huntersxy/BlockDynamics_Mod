@@ -11,7 +11,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 public class Moditems {
-    private static final String MOD_ID = "blockd";
+    static final String MOD_ID = "blockd";
     // 注册物品和方块
     public static final DeferredRegister<Item>
             ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
@@ -28,16 +28,29 @@ public class Moditems {
 
 
     // 注册方块
+    // 注册方块 - 修改为泥土硬度，空手可破坏
     public static final RegistryObject<Givetagblock> GIVETAG_BLOCK = BLOCKS.register("givetag_block",
-            () -> new Givetagblock(Block.Properties.of().strength(2.0f).requiresCorrectToolForDrops()));
+        () -> new Givetagblock(Block.Properties.of()
+                .strength(0.5f)  // 泥土硬度
+                // 移除 requiresCorrectToolForDrops() 使空手可掉落
+        ));
+
 
     // 注册方块物品（以便能在物品栏中显示）
     public static final RegistryObject<Item> GIVETAG_BLOCK_ITEM = ITEMS.register("givetag_block",
             () -> new BlockItem(GIVETAG_BLOCK.get(), new Item.Properties()));
+
+    //创造模式物品栏
+
+
+
 
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
         BLOCKS.register(eventBus);
     }
+
+
+
 }
