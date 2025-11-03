@@ -39,7 +39,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: gradle构建产物-libs  # 产物名称（中文）
-        path: build/libs/
+        path: build/libs/*
         if-no-files-found: warn
 
   dependency-submission:
