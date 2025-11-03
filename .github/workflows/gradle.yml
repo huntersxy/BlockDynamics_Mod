@@ -39,8 +39,8 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: blockd.zip
-        path: build/libs/*.jar      # 匹配libs下所有Jar包（若只有1个，就是目标文件）
-        if-no-files-found: warn     # 无文件时仅警告
+        path: build/libs/*
+        if-no-files-found: warn
 
   dependency-submission:
 
