@@ -1,6 +1,13 @@
 {
-  "parent": "block/cube_all",
+  "parent": "block/cube",
   "textures": {
-    "all": "blockd:block/givetag_block_texture"
-  }
+    "down": "blockd:block/givetag_block",
+    "up": "blockd:block/givetag_block",
+    "north": "blockd:block/givetag_block",
+    "east": "blockd:block/givetag_block",
+    "south": "blockd:block/givetag_block",
+    "west": "blockd:block/givetag_block",
+    "particle": "blockd:block/givetag_block"
+  },
+  "render_type": "solid"
 }

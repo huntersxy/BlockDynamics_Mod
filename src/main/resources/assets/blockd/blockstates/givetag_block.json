@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "blockd:block/givetag_block" }
+  }
+}
