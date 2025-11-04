@@ -1,6 +1,5 @@
 package com.huntersxy.blockd.method;
 
-
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraftforge.event.entity.living.LivingEvent;
