@@ -2,7 +2,10 @@
   "required": true,
   "package": "com.huntersxy.blockd.mixin",
   "compatibilityLevel": "JAVA_17",
-  "mixins": [],
+  "refmap": "mixins.blockd.refmap.json",
+  "mixins": [
+    "MixinLivingEntity"
+  ],
   "client": [],
   "server": [],
   "injectors": {

@@ -1,7 +1,9 @@
 package com.huntersxy.blockd.block;
 
+import com.huntersxy.blockd.Imixin.ILivingEntity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -94,9 +96,9 @@ public class Givetagblock extends Block {
      */
     private void givetag(Entity entity) {
         // 检查是否为非玩家实体
-        if (!(entity instanceof Player)) {
-            // 给实体添加标签"test2"
-            entity.addTag("test");
+        if (entity instanceof Mob mob) {
+            //调用blockd$set_freeze_ai
+            ((ILivingEntity)mob).blockd$set_freeze_ai(true);
         }
     }
 
@@ -106,11 +108,12 @@ public class Givetagblock extends Block {
      */
     private void cleantag(Entity entity) {
         // 检查是否为非玩家实体
-        if (!(entity instanceof Player)) {
+        if (entity instanceof Mob mob) {
             //重置实体运动
             entity.setDeltaMovement(0, 0, 0);
             // 移除实体的test2标签
-            entity.removeTag("test");
+            //entity.removeTag("test");
+            ((ILivingEntity)mob).blockd$set_freeze_ai(false);
         }
     }
 }
