@@ -1,7 +1,7 @@
 package com.huntersxy.blockd.block;
 
+import com.huntersxy.blockd.Config;
 import com.huntersxy.blockd.Imixin.ILivingEntity;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
@@ -20,16 +20,6 @@ public class Givetagblock extends Block {
 
     public Givetagblock(Properties properties) {
         super(properties);
-    }
-
-    @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
-        super.onPlace(state, level, pos, oldState, isMoving);
-
-        // 当方块被放置时执行givetag方法
-        if (!level.isClientSide) {
-            executeGivetag(level, pos);
-        }
     }
 
     @Override
@@ -75,8 +65,9 @@ public class Givetagblock extends Block {
      */
     private void executeOperation(Level level, BlockPos pos, java.util.function.Consumer<Entity> operation) {
         // 定义7x7x7的范围（以方块为中心）
-        BlockPos startPos = pos.offset(-3, -3, -3);
-        BlockPos endPos = pos.offset(3, 3, 3);
+        int range = Config.givetagBlockRange;
+        BlockPos startPos = pos.offset(-range, -range, -range);
+        BlockPos endPos = pos.offset(range, range, range);
 
         // 获取范围内的所有实体
         AABB boundingBox = new AABB(startPos, endPos);
@@ -111,8 +102,6 @@ public class Givetagblock extends Block {
         if (entity instanceof Mob mob) {
             //重置实体运动
             entity.setDeltaMovement(0, 0, 0);
-            // 移除实体的test2标签
-            //entity.removeTag("test");
             ((ILivingEntity)mob).blockd$set_freeze_ai(false);
         }
     }

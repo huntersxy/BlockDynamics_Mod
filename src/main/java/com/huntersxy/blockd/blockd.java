@@ -2,15 +2,10 @@ package com.huntersxy.blockd;
 
 import com.huntersxy.blockd.item.ModCreativeTabs;
 import com.huntersxy.blockd.item.Moditems;
-import com.huntersxy.blockd.method.limit_breeding;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.living.BabyEntitySpawnEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -38,8 +33,6 @@ public class blockd
     {
         IEventBus modEventBus = context.getModEventBus();
 
-        new limit_breeding();
-
         // 注册通用设置方法用于模组加载
         modEventBus.addListener(this::commonSetup);
 
@@ -59,33 +52,6 @@ public class blockd
 
 
 }
-
-/***
-    @SubscribeEvent
-    public void onBabySpawn(BabyEntitySpawnEvent event) {
-        // 获取父代实体
-        Mob parentA = event.getParentA();
-        // 获取父代所在区块
-        BlockPos parentAPos = parentA.blockPosition();
-
-        // 获取父代区块内 mob 实体的数量
-        long parentAEntityCount = parentA.level()
-                .getEntitiesOfClass(Mob.class,
-                        new AABB(parentAPos.getX() - 8, parentAPos.getY() - 8, parentAPos.getZ() - 8,
-                                parentAPos.getX() + 8, parentAPos.getY() + 8, parentAPos.getZ() + 8))
-                .size();
-
-
-        // 获取即将出生的子代
-        Mob child = event.getChild();
-        //如果父代区块内 mob 实体数量大于maxMobsInChunk，则取消繁殖
-        if (parentAEntityCount >  Config.maxMobsInChunk) {
-            event.setCanceled(true);
-            LOGGER.info("阻止了一次繁殖");
-        }
-    }
-
-**/
 
 
     // 模组通用设置方法
