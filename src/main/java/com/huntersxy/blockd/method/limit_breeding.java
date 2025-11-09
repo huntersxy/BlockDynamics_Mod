@@ -10,7 +10,12 @@ import net.minecraftforge.fml.common.Mod;
 
 import static com.huntersxy.blockd.blockd.LOGGER;
 
+/**
+ * Forge事件总线订阅器注解，用于注册BlockD模组的事件监听器
+ * 该注解将目标类标记为Forge事件总线的订阅者，使其能够接收和处理游戏事件。
+ */
 @Mod.EventBusSubscriber(modid = "blockd", bus = Mod.EventBusSubscriber.Bus.FORGE)
+
 public class limit_breeding {
        /**
      * 当生物繁殖产生子代时触发的事件处理函数
@@ -32,8 +37,6 @@ public class limit_breeding {
                                 parentAPos.getX() + 8, parentAPos.getY() + 8, parentAPos.getZ() + 8))
                 .size();
 
-        // 获取即将出生的子代
-        Mob child = event.getChild();
         // 如果父代区块内 mob 实体数量大于maxMobsInChunk，则取消繁殖
         if (parentAEntityCount > Config.maxMobsInChunk) {
             event.setCanceled(true);
