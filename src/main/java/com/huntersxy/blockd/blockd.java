@@ -2,6 +2,7 @@ package com.huntersxy.blockd;
 
 import com.huntersxy.blockd.item.ModCreativeTabs;
 import com.huntersxy.blockd.item.Moditems;
+import com.huntersxy.blockd.method.limit_breeding;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -30,12 +31,14 @@ public class blockd
 
 
     // Directly reference a slf4j logger
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = LogUtils.getLogger();
 
 
     public blockd(FMLJavaModLoadingContext context)
     {
         IEventBus modEventBus = context.getModEventBus();
+
+        new limit_breeding();
 
         // 注册通用设置方法用于模组加载
         modEventBus.addListener(this::commonSetup);
@@ -57,7 +60,7 @@ public class blockd
 
 }
 
-
+/***
     @SubscribeEvent
     public void onBabySpawn(BabyEntitySpawnEvent event) {
         // 获取父代实体
@@ -82,7 +85,7 @@ public class blockd
         }
     }
 
-
+**/
 
 
     // 模组通用设置方法
