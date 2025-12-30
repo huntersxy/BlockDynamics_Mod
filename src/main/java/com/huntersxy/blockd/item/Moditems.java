@@ -18,14 +18,6 @@ public class Moditems {
     public static final DeferredRegister<Block>
             BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, "blockd");
 
-    // 创建物品
-    public static final RegistryObject<Item> test =
-    ITEMS.register("test", () -> new ExplosiveSwordItem(Tiers.IRON, 3, -2.4F, new Item.Properties()));
-
-    // 创建物品
-    public static final RegistryObject<Item> test2 =
-    ITEMS.register("test2", () -> new GiveTag(new Item.Properties()));
-
 
     // 注册方块
     // 注册方块 - 修改为泥土硬度，空手可破坏
@@ -39,11 +31,6 @@ public class Moditems {
     // 注册方块物品（以便能在物品栏中显示）
     public static final RegistryObject<Item> GIVETAG_BLOCK_ITEM = ITEMS.register("givetag_block",
             () -> new BlockItem(GIVETAG_BLOCK.get(), new Item.Properties()));
-
-    //创造模式物品栏
-
-
-
 
 
     public static void register(IEventBus eventBus) {
