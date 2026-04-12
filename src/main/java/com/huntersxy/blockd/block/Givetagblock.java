@@ -14,6 +14,9 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.server.level.ServerLevel;
 
 import java.util.List;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootParams;
+import javax.annotation.Nonnull;
 
 public class Givetagblock extends Block {
     // 记录方块是否处于充能状态
@@ -24,7 +27,7 @@ public class Givetagblock extends Block {
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+    public void neighborChanged(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Block block, @Nonnull BlockPos fromPos, boolean isMoving) {
         super.neighborChanged(state, level, pos, block, fromPos, isMoving);
 
         // 处理红石信号变化
@@ -113,5 +116,16 @@ public class Givetagblock extends Block {
             freeze_ai.removeFrozenMob(mob);
             ((ILivingEntity)mob).blockd$set_freeze_ai(false);
         }
+    }
+
+    @Override
+    public @Nonnull List<ItemStack> getDrops(@Nonnull BlockState state, @Nonnull LootParams.Builder builder) {
+        List<ItemStack> drops = super.getDrops(state, builder);
+        
+        // 确保方块掉落
+        drops.clear();
+        drops.add(new ItemStack(this));
+        
+        return drops;
     }
 }

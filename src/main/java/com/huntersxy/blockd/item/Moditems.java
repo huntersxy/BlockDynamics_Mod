@@ -2,8 +2,6 @@ package com.huntersxy.blockd.item;
 
 import com.huntersxy.blockd.block.Givetagblock;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -22,6 +20,7 @@ public class Moditems {
         () -> new Givetagblock(BlockBehaviour.Properties.of()
                 .strength(0.5f)  // 泥土硬度
                 // 移除 requiresCorrectToolForDrops() 使空手可掉落
+            
         ));
 
 
