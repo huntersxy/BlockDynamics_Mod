@@ -1,39 +1,53 @@
 package com.huntersxy.blockd;
 
-import com.huntersxy.blockd.item.ModCreativeTabs;
-import com.huntersxy.blockd.item.Moditems;
-import com.mojang.logging.LogUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 
+import com.mojang.logging.LogUtils;
 
-// The value here should match an entry in the META-INF/mods.toml file
-@Mod(blockd.MOD_ID)
-public class blockd
-{
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import com.huntersxy.blockd.item.ModCreativeTabs;
+import com.huntersxy.blockd.item.Moditems;
+import com.huntersxy.blockd.method.freeze_ai;
+import com.huntersxy.blockd.method.limit_breeding;
+import net.neoforged.neoforge.registries.DeferredBlock;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredItem;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
-    public static final String MOD_ID = "blockd";
-
-
+// The value here should match an entry in the META-INF/neoforge.mods.toml file
+@Mod(blockd.MODID)
+public class blockd {
+    // Define mod id in a common place for everything to reference
+    public static final String MODID = "blockd";
     // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
 
 
-    public blockd(FMLJavaModLoadingContext context)
-    {
-        IEventBus modEventBus = context.getModEventBus();
-
-        // 注册通用设置方法用于模组加载
+    // The constructor for the mod class is the first code that is run when your mod is loaded.
+    // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
+    public blockd(IEventBus modEventBus, ModContainer modContainer) {
+        // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
 
         // 注册模组物品
@@ -42,47 +56,29 @@ public class blockd
         // 注册创造模式物品栏
         ModCreativeTabs.register(modEventBus);
 
+        // Register ourselves for server and other game events we are interested in.
+        // Note that this is necessary if and only if we want *this* class (blockd) to respond directly to events.
+        // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
+        NeoForge.EVENT_BUS.register(this);
+        // 注册事件监听器
+        NeoForge.EVENT_BUS.register(freeze_ai.class);
+        NeoForge.EVENT_BUS.register(limit_breeding.class);
 
-        // 为我们感兴趣的服务器和其他游戏事件注册自己
-        MinecraftForge.EVENT_BUS.register(this);
+        // Register our mod's ModConfigSpec so that FML can create and load the config file for us
+        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+    }
 
-
-        // 注册我们模组的ForgeConfigSpec，以便Forge可以为我们创建和加载配置文件
-        context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-
-
-}
-
-
-    // 模组通用设置方法
-    // 在模组加载时执行
-    private void commonSetup(final FMLCommonSetupEvent event)
-    {
-
+    private void commonSetup(FMLCommonSetupEvent event) {
+        // Some common setup code
         LOGGER.info("HELLO FROM COMMON SETUP");
-
     }
 
-    // 模组创造模式物品栏注册方法
 
 
-    // 服务器启动时执行
+    // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event)
-    {
+    public void onServerStarting(ServerStartingEvent event) {
+        // Do something when the server starts
         LOGGER.info("HELLO from server starting");
-    }
-
-    // 客户端设置方法,用于注册客户端设置
-    @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ClientModEvents
-    {
-
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event)
-        {
-            LOGGER.info("HELLO FROM CLIENT SETUP");
-            LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
-        }
     }
 }

@@ -2,6 +2,7 @@ package com.huntersxy.blockd.block;
 
 import com.huntersxy.blockd.Config;
 import com.huntersxy.blockd.Imixin.ILivingEntity;
+import com.huntersxy.blockd.method.freeze_ai;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
@@ -70,7 +71,7 @@ public class Givetagblock extends Block {
         BlockPos endPos = pos.offset(range, range, range);
 
         // 获取范围内的所有实体
-        AABB boundingBox = new AABB(startPos, endPos);
+        AABB boundingBox = AABB.encapsulatingFullBlocks(startPos, endPos);
         List<Entity> entities = level.getEntitiesOfClass(Entity.class, boundingBox);
 
         // 对每个实体执行指定操作
@@ -88,8 +89,14 @@ public class Givetagblock extends Block {
     private void givetag(Entity entity) {
         // 检查是否为非玩家实体
         if (entity instanceof Mob mob) {
+            // 停止所有运动
+            entity.setDeltaMovement(0, 0, 0);
+            // 停止所有AI目标
+            mob.setTarget(null);
             //调用blockd$set_freeze_ai
             ((ILivingEntity)mob).blockd$set_freeze_ai(true);
+            // 添加到冻结集合
+            freeze_ai.addFrozenMob(mob);
         }
     }
 
@@ -102,6 +109,8 @@ public class Givetagblock extends Block {
         if (entity instanceof Mob mob) {
             //重置实体运动
             entity.setDeltaMovement(0, 0, 0);
+            // 从冻结集合中移除
+            freeze_ai.removeFrozenMob(mob);
             ((ILivingEntity)mob).blockd$set_freeze_ai(false);
         }
     }

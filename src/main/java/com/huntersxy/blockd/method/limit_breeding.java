@@ -1,20 +1,13 @@
 package com.huntersxy.blockd.method;
 
 import com.huntersxy.blockd.Config;
-import net.minecraftforge.event.entity.living.BabyEntitySpawnEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.living.BabyEntitySpawnEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.fml.common.Mod;
 
 import static com.huntersxy.blockd.blockd.LOGGER;
-
-/**
- * Forge事件总线订阅器注解，用于注册BlockD模组的事件监听器
- * 该注解将目标类标记为Forge事件总线的订阅者，使其能够接收和处理游戏事件。
- */
-@Mod.EventBusSubscriber(modid = "blockd", bus = Mod.EventBusSubscriber.Bus.FORGE)
 
 public class limit_breeding {
        /**
