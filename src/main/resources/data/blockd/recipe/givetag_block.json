@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "givetag_block",
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:egg"
+    }
+  },
+  "result": {
+    "id": "blockd:givetag_block"
+  }
+}
