@@ -1,0 +1,130 @@
+package com.huntersxy.blockd.block;
+
+import com.huntersxy.blockd.Config;
+import com.huntersxy.blockd.Imixin.ILivingEntity;
+import com.huntersxy.blockd.method.freeze_ai;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.Level;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.server.level.ServerLevel;
+
+import java.util.List;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootParams;
+import javax.annotation.Nonnull;
+
+public class Givetagblock extends Block {
+    // 记录方块是否处于充能状态
+    private boolean isPowered = false;
+
+    public Givetagblock(Properties properties) {
+        super(properties);
+    }
+
+    public void neighborChanged(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Block block, @Nonnull BlockPos fromPos, boolean isMoving) {
+        // 不需要调用super方法，直接处理红石信号逻辑
+
+        // 处理红石信号变化
+        if (!level.isClientSide() && level instanceof ServerLevel) {
+            boolean currentlyPowered = level.hasNeighborSignal(pos);
+
+            // 从充能到未充能时执行cleantag
+            if (isPowered && !currentlyPowered) {
+                executeCleantag(level, pos);
+            }
+            // 从未充能到充能时执行givetag
+            else if (!isPowered && currentlyPowered) {
+                executeGivetag(level, pos);
+            }
+
+            // 更新充能状态
+            isPowered = currentlyPowered;
+        }
+    }
+
+    /**
+     * 在7x7范围内对所有实体执行givetag方法
+     * @param level 当前世界
+     * @param pos 方块位置
+     */
+    private void executeGivetag(Level level, BlockPos pos) {
+        executeOperation(level, pos, this::givetag);
+    }
+
+    private void executeCleantag(Level level, BlockPos pos) {
+        executeOperation(level, pos, this::cleantag);
+    }
+
+    /**
+     * 在7x7范围内对所有实体执行指定操作
+     * @param level 当前世界
+     * @param pos 方块位置
+     * @param operation 要执行的操作
+     */
+    private void executeOperation(Level level, BlockPos pos, java.util.function.Consumer<Entity> operation) {
+        // 定义7x7x7的范围（以方块为中心）
+        int range = Config.givetagBlockRange;
+        BlockPos startPos = pos.offset(-range, -range, -range);
+        BlockPos endPos = pos.offset(range, range, range);
+
+        // 获取范围内的所有实体
+        AABB boundingBox = AABB.encapsulatingFullBlocks(startPos, endPos);
+        List<Entity> entities = level.getEntitiesOfClass(Entity.class, boundingBox);
+
+        // 对每个实体执行指定操作
+        for (Entity entity : entities) {
+            if (!(entity instanceof Player && ((Player) entity).isCreative())) {
+                operation.accept(entity);
+            }
+        }
+    }
+
+    /**
+     * 给实体添加标签的方法
+     * @param entity 目标实体
+     */
+    private void givetag(Entity entity) {
+        // 检查是否为非玩家实体
+        if (entity instanceof Mob mob) {
+            // 停止所有运动
+            entity.setDeltaMovement(0, 0, 0);
+            // 停止所有AI目标
+            mob.setTarget(null);
+            //调用blockd$set_freeze_ai
+            ((ILivingEntity)mob).blockd$set_freeze_ai(true);
+            // 添加到冻结集合
+            freeze_ai.addFrozenMob(mob);
+        }
+    }
+
+    /**
+     * 清除实体标签的方法
+     * @param entity 目标实体
+     */
+    private void cleantag(Entity entity) {
+        // 检查是否为非玩家实体
+        if (entity instanceof Mob mob) {
+            //重置实体运动
+            entity.setDeltaMovement(0, 0, 0);
+            // 从冻结集合中移除
+            freeze_ai.removeFrozenMob(mob);
+            ((ILivingEntity)mob).blockd$set_freeze_ai(false);
+        }
+    }
+
+    @Override
+    public @Nonnull List<ItemStack> getDrops(@Nonnull BlockState state, @Nonnull LootParams.Builder builder) {
+        List<ItemStack> drops = super.getDrops(state, builder);
+        
+        // 确保方块掉落
+        drops.clear();
+        drops.add(new ItemStack(this));
+        
+        return drops;
+    }
+}
