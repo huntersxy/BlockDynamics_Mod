@@ -1,6 +1,3 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "minecraft:item/stone"
-  }
+  "parent": "blockd:block/givetag_block"
 }

@@ -1,6 +1,7 @@
 package com.huntersxy.blockd.method;
 
 import com.huntersxy.blockd.Imixin.ILivingEntity;
+import com.huntersxy.blockd.blockd;
 import net.minecraft.world.entity.Mob;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -14,6 +15,7 @@ public class freeze_ai {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
+        if (frozenMobs.isEmpty()) return;
         // 遍历被冻结的实体
         frozenMobs.removeIf(mob -> {
             if (!mob.isAlive() || !((ILivingEntity)mob).blockd$is_freeze_ai()) {
@@ -36,11 +38,13 @@ public class freeze_ai {
 
     // 添加实体到冻结集合
     public static void addFrozenMob(Mob mob) {
+        blockd.LOGGER.info("addFrozenMob called - mob: {}", mob.getName().getString());
         frozenMobs.add(mob);
     }
 
     // 从冻结集合中移除实体
     public static void removeFrozenMob(Mob mob) {
+        blockd.LOGGER.info("removeFrozenMob called - mob: {}", mob.getName().getString());
         frozenMobs.remove(mob);
         // 立即恢复AI
         if (mob.isNoAi()) {

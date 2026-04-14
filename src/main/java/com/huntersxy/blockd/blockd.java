@@ -47,7 +47,7 @@ public class blockd {
 
     public void addCreativeTab(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS) {
-          //  event.accept(Moditems.GIVETAG_BLOCK_ITEM.get());
+            event.accept(Moditems.GIVETAG_BLOCK_ITEM.get());
         }
     }
 

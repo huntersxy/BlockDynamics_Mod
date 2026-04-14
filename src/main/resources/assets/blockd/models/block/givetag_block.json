@@ -1,12 +1,6 @@
 {
-  "parent": "minecraft:block/cube",
+  "parent": "block/cube_all",
   "textures": {
-    "down": "minecraft:block/stone",
-    "up": "minecraft:block/stone",
-    "north": "minecraft:block/stone",
-    "east": "minecraft:block/stone",
-    "south": "minecraft:block/stone",
-    "west": "minecraft:block/stone",
-    "particle": "minecraft:block/stone"
+    "all": "blockd:block/givetag_block"
   }
 }

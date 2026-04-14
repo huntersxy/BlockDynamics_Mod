@@ -12,6 +12,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.redstone.Orientation;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import net.minecraft.world.item.ItemStack;
@@ -26,8 +28,9 @@ public class Givetagblock extends Block {
         super(properties);
     }
 
-    public void neighborChanged(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Block block, @Nonnull BlockPos fromPos, boolean isMoving) {
-        // 不需要调用super方法，直接处理红石信号逻辑
+    @Override
+    protected void neighborChanged(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Block block, @Nullable Orientation orientation, boolean isMoving) {
+        super.neighborChanged(state, level, pos, block, orientation, isMoving);
 
         // 处理红石信号变化
         if (!level.isClientSide() && level instanceof ServerLevel) {

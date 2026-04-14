@@ -13,10 +13,11 @@ public class Moditems {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MOD_ID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MOD_ID);
 
-    public static final DeferredBlock<Givetagblock> GIVETAG_BLOCK = BLOCKS.register("givetag_block",
-        () -> new Givetagblock(BlockBehaviour.Properties.of()
+    public static final DeferredBlock<Givetagblock> GIVETAG_BLOCK = BLOCKS.registerBlock("givetag_block",
+            Givetagblock::new, properties -> properties
                 .strength(0.5f)
-        ));
+                .requiresCorrectToolForDrops()
+        );
 
     public static final DeferredItem<BlockItem> GIVETAG_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("givetag_block", GIVETAG_BLOCK);
 
