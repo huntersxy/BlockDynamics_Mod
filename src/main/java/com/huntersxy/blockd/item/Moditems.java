@@ -16,7 +16,6 @@ public class Moditems {
     public static final DeferredBlock<Givetagblock> GIVETAG_BLOCK = BLOCKS.registerBlock("givetag_block",
             Givetagblock::new, properties -> properties
                 .strength(0.5f)
-                .requiresCorrectToolForDrops()
         );
 
     public static final DeferredItem<BlockItem> GIVETAG_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("givetag_block", GIVETAG_BLOCK);

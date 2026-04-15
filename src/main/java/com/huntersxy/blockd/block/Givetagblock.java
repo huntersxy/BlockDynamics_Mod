@@ -89,7 +89,7 @@ public class Givetagblock extends Block {
         List<ItemStack> drops = super.getDrops(state, builder);
 
         drops.clear();
-        drops.add(new ItemStack(this));
+        drops.add(new ItemStack(this.asItem()));
 
         return drops;
     }
