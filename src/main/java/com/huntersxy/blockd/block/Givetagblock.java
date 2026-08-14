@@ -2,57 +2,89 @@ package com.huntersxy.blockd.block;
 
 import com.huntersxy.blockd.Config;
 import com.huntersxy.blockd.Imixin.ILivingEntity;
-import com.huntersxy.blockd.method.freeze_ai;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.Level;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.server.level.ServerLevel;
-
-import java.util.List;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
-import javax.annotation.Nonnull;
+import net.minecraft.world.phys.AABB;
 
+import javax.annotation.Nonnull;
+import java.util.List;
+import java.util.function.Consumer;
+
+/**
+ * 实体冻结器：红石通电时冻结范围内生物，断电时解除。
+ *
+ * <p>修复要点：
+ * <ul>
+ *   <li>充能状态存入 BlockState 的 POWERED 属性（按方块位置持久化到区块），
+ *       不再使用 Block 实例字段（1.21.1 方块是全局单例，实例字段会被所有
+ *       同名方块共享，导致多个冻结器互相干扰）；</li>
+ *   <li>用 getBestNeighborSignal 检测弱信号（红石粉也能激活）；</li>
+ *   <li>onPlace 处理"贴着已通电位置放置"的边沿；</li>
+ *   <li>onRemove 在方块被破坏/替换时解冻范围内生物，避免永久冻结。</li>
+ * </ul>
+ */
 public class Givetagblock extends Block {
-    // 记录方块是否处于充能状态
-    private boolean isPowered = false;
+    public static final BooleanProperty POWERED = BooleanProperty.create("powered");
 
     public Givetagblock(Properties properties) {
         super(properties);
+        this.registerDefaultState(this.getStateDefinition().any().setValue(POWERED, false));
     }
 
     @Override
-    public void neighborChanged(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Block block, @Nonnull BlockPos fromPos, boolean isMoving) {
-        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(POWERED);
+    }
 
-        // 处理红石信号变化
-        if (!level.isClientSide && level instanceof ServerLevel) {
-            boolean currentlyPowered = level.hasNeighborSignal(pos);
-
-            // 从充能到未充能时执行cleantag
-            if (isPowered && !currentlyPowered) {
-                executeCleantag(level, pos);
-            }
-            // 从未充能到充能时执行givetag
-            else if (!isPowered && currentlyPowered) {
-                executeGivetag(level, pos);
-            }
-
-            // 更新充能状态
-            isPowered = currentlyPowered;
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        // 放置方块本身不会触发 neighborChanged，这里补一次对拍（贴着已通电位置放置也能生效）
+        if (!level.isClientSide && !oldState.is(this)) {
+            reconcilePower(level, pos, state);
         }
     }
 
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
+        if (!level.isClientSide) {
+            reconcilePower(level, pos, state);
+        }
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        // 方块被破坏/替换时解冻范围内的实体，避免"拆除冻结器后生物永久冻结"
+        if (!level.isClientSide && state.getValue(POWERED) && !newState.is(this)) {
+            executeCleantag(level, pos);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
     /**
-     * 在7x7范围内对所有实体执行givetag方法
-     * @param level 当前世界
-     * @param pos 方块位置
+     * 将实际红石信号与方块状态对拍，仅在边沿变化时执行冻结/解冻。
+     * POWERED 状态随区块保存，区块重载后状态一致。
      */
+    private void reconcilePower(Level level, BlockPos pos, BlockState state) {
+        boolean currentlyPowered = level.getBestNeighborSignal(pos) > 0;
+        boolean wasPowered = state.getValue(POWERED);
+        if (currentlyPowered && !wasPowered) {
+            level.setBlock(pos, state.setValue(POWERED, true), 3);
+            executeGivetag(level, pos);
+        } else if (!currentlyPowered && wasPowered) {
+            level.setBlock(pos, state.setValue(POWERED, false), 3);
+            executeCleantag(level, pos);
+        }
+    }
+
     private void executeGivetag(Level level, BlockPos pos) {
         executeOperation(level, pos, this::givetag);
     }
@@ -62,70 +94,34 @@ public class Givetagblock extends Block {
     }
 
     /**
-     * 在7x7范围内对所有实体执行指定操作
-     * @param level 当前世界
-     * @param pos 方块位置
-     * @param operation 要执行的操作
+     * 在 (2*range+1)^3 范围内对所有 Mob 执行指定操作。
      */
-    private void executeOperation(Level level, BlockPos pos, java.util.function.Consumer<Entity> operation) {
-        // 定义7x7x7的范围（以方块为中心）
+    private void executeOperation(Level level, BlockPos pos, Consumer<Mob> operation) {
         int range = Config.givetagBlockRange;
         BlockPos startPos = pos.offset(-range, -range, -range);
         BlockPos endPos = pos.offset(range, range, range);
-
-        // 获取范围内的所有实体
         AABB boundingBox = AABB.encapsulatingFullBlocks(startPos, endPos);
-        List<Entity> entities = level.getEntitiesOfClass(Entity.class, boundingBox);
-
-        // 对每个实体执行指定操作
-        for (Entity entity : entities) {
-            if (!(entity instanceof Player && ((Player) entity).isCreative())) {
-                operation.accept(entity);
-            }
+        for (Mob mob : level.getEntitiesOfClass(Mob.class, boundingBox)) {
+            operation.accept(mob);
         }
     }
 
-    /**
-     * 给实体添加标签的方法
-     * @param entity 目标实体
-     */
-    private void givetag(Entity entity) {
-        // 检查是否为非玩家实体
-        if (entity instanceof Mob mob) {
-            // 停止所有运动
-            entity.setDeltaMovement(0, 0, 0);
-            // 停止所有AI目标
-            mob.setTarget(null);
-            //调用blockd$set_freeze_ai
-            ((ILivingEntity)mob).blockd$set_freeze_ai(true);
-            // 添加到冻结集合
-            freeze_ai.addFrozenMob(mob);
-        }
+    private void givetag(Mob mob) {
+        mob.setDeltaMovement(0, 0, 0);
+        mob.setTarget(null);
+        ((ILivingEntity) mob).blockd$set_freeze_ai(true);
     }
 
-    /**
-     * 清除实体标签的方法
-     * @param entity 目标实体
-     */
-    private void cleantag(Entity entity) {
-        // 检查是否为非玩家实体
-        if (entity instanceof Mob mob) {
-            //重置实体运动
-            entity.setDeltaMovement(0, 0, 0);
-            // 从冻结集合中移除
-            freeze_ai.removeFrozenMob(mob);
-            ((ILivingEntity)mob).blockd$set_freeze_ai(false);
-        }
+    private void cleantag(Mob mob) {
+        ((ILivingEntity) mob).blockd$set_freeze_ai(false);
     }
 
     @Override
     public @Nonnull List<ItemStack> getDrops(@Nonnull BlockState state, @Nonnull LootParams.Builder builder) {
         List<ItemStack> drops = super.getDrops(state, builder);
-        
         // 确保方块掉落
         drops.clear();
         drops.add(new ItemStack(this));
-        
         return drops;
     }
 }

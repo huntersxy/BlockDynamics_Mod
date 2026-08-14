@@ -46,7 +46,7 @@ authors="Huntersxy"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Example mod description.
+Block Dynamics: 实体冻结器（红石冻结/解冻生物）与繁殖限制。Entity Freezer & breeding limiter.
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.
@@ -71,7 +71,7 @@ config="${mod_id}.mixins.json"
     # Optional field describing why the dependency is required or why it is incompatible
     # reason="..."
     # The version range of the dependency
-    versionRange="[${neo_version},)" #mandatory
+    versionRange="[21.1,)" #mandatory
     # An ordering relationship for the dependency.
     # BEFORE - This mod is loaded BEFORE the dependency
     # AFTER - This mod is loaded AFTER the dependency

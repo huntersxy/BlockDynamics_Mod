@@ -15,7 +15,6 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import com.huntersxy.blockd.item.ModCreativeTabs;
 import com.huntersxy.blockd.item.Moditems;
-import com.huntersxy.blockd.method.freeze_ai;
 import com.huntersxy.blockd.method.limit_breeding;
 
 
@@ -45,7 +44,6 @@ public class blockd {
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
         // 注册事件监听器
-        NeoForge.EVENT_BUS.register(freeze_ai.class);
         NeoForge.EVENT_BUS.register(limit_breeding.class);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
