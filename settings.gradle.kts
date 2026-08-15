@@ -17,7 +17,7 @@ rootProject.name = "BlockDynamics_Mod"
 
 stonecutter {
     create(rootProject) {
-        listOf("1.21.1", "1.21.11", "26.1", "26.1.2", "26.2").forEach { version ->
+        listOf("1.21.1", "1.21.11", "26.1.2", "26.2").forEach { version ->
             version("$version-neoforge", version).buildscript = "build.neoforge.gradle.kts"
         }
         vcsVersion = "1.21.1-neoforge"

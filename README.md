@@ -15,7 +15,6 @@
 |---|---|---|---|
 | 1.21.1 | 21.1.248 | 21 | 2024.11.17 |
 | 1.21.11 | 21.11.42 | 21 | 2025.12.20 |
-| 26.1 | 26.1.0.19-beta | 25 | - |
 | 26.1.2 | 26.1.2.95 | 25 | - |
 | 26.2 | 26.2.0.59 | 25 | - |
 
@@ -33,7 +32,6 @@
 # 跑 gametest（每个版本各有 5 个行为测试）
 ./gradlew :1.21.1-neoforge:runGameTestServer
 ./gradlew :1.21.11-neoforge:runGameTestServer
-./gradlew :26.1-neoforge:runGameTestServer
 ./gradlew :26.1.2-neoforge:runGameTestServer
 ./gradlew :26.2-neoforge:runGameTestServer
 ```
