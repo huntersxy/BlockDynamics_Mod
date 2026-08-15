@@ -13,6 +13,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.chicken.Chicken;
 import net.minecraft.world.entity.animal.cow.Cow;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeverBlock;
 import net.minecraft.world.level.block.RedStoneWireBlock;
@@ -166,6 +167,44 @@ public class BlockDynamicsGameTestsModern {
         } finally {
             Config.maxMobsInChunk = oldMax;
         }
+    }
+
+    // 配方合成测试：9 个鸡蛋应能按配方合成冻结器（验证配方 JSON 可解析且可匹配）。
+    public static void recipeCraftsFreezer(GameTestHelper helper) {
+        ItemStack result = RecipeCraftTest.craft(helper);
+        helper.assertTrue(!result.isEmpty(), "冻结器配方应存在且能解析匹配");
+        helper.assertTrue(result.is(Moditems.GIVETAG_BLOCK_ITEM.get()), "合成结果应为冻结器方块");
+        helper.succeed();
+    }
+
+    // 解冻瞬间速度矢量应为 0：冻结期间每 tick 注入水平速度（模拟挤压/击退等外力），
+    // 解冻后残留冲量不应被结算，实体只受重力正常下落。
+    public static void unfreezeClearsVelocity(GameTestHelper helper) {
+        BlockPos freezer = new BlockPos(4, 12, 4);
+        BlockPos power = freezer.offset(1, 0, 0);
+        helper.setBlock(freezer, Moditems.GIVETAG_BLOCK.get());
+        Cow cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
+        final double[] x0 = new double[1];
+        final double[] y0 = new double[1];
+
+        helper.startSequence()
+            .thenExecute(() -> helper.setBlock(power, Blocks.REDSTONE_BLOCK))
+            .thenExecuteAfter(10, () -> {
+                helper.assertTrue(cow.isNoAi(), "前置：生物应先被冻结");
+                x0[0] = cow.getX();
+                y0[0] = cow.getY();
+            })
+            // 冻结期间每 tick 注入水平速度，模拟挤压/击退等外力（travel 应将其清零）
+            .thenExecuteFor(20, () -> cow.setDeltaMovement(5, 0, 0))
+            // 断电（解冻）：速度清零发生在方块 tick 阶段，早于下一次实体 travel
+            .thenExecute(() -> helper.setBlock(power, Blocks.AIR))
+            // 解冻后：不应有水平位移（残留冲量未被结算）
+            .thenExecuteAfter(1, () -> {
+                helper.assertTrue(!cow.isNoAi(), "断电后生物应解除冻结");
+                helper.assertTrue(Math.abs(cow.getX() - x0[0]) < 0.01, "解冻瞬间不应有水平位移（速度矢量应保持为 0）");
+            })
+            .thenExecuteAfter(30, () -> helper.assertTrue(cow.getY() < y0[0] - 1.0, "解冻后生物应受重力下落"))
+            .thenSucceed();
     }
 }
  *///?}

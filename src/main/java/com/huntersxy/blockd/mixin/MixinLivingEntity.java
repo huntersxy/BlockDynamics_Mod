@@ -43,10 +43,17 @@ public class MixinLivingEntity implements ILivingEntity {
                     mob.setNoAi(true);
                 }
                 mob.setTarget(null);
-            } else if (mob.isNoAi()) {
-                // 解冻：恢复 AI。注意：若实体本身是原生 NoAI（非本模组设置），
-                // 解冻会一并恢复其 AI，属已知边缘行为。
-                mob.setNoAi(false);
+            } else {
+                if (mob.isNoAi()) {
+                    // 解冻：恢复 AI。注意：若实体本身是原生 NoAI（非本模组设置），
+                    // 解冻会一并恢复其 AI，属已知边缘行为。
+                    mob.setNoAi(false);
+                }
+                // 解冻瞬间速度矢量归零：冻结期间 travel 每 tick 清零 deltaMovement，
+                // 但 Level.pushEntities（实体挤压/爆炸冲量等）在实体 tick 之后运行，
+                // 上一 tick 末尾写入的速度会在解冻后的第一次 travel 中被结算，
+                // 造成"解冻弹飞"。这里清零保证解冻瞬间速度为 0、挤压不结算。
+                mob.setDeltaMovement(0, 0, 0);
             }
         }
     }

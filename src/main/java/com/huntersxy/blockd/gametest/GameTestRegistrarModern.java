@@ -35,6 +35,8 @@ public class GameTestRegistrarModern {
         event.register(Registries.TEST_FUNCTION, id("breaking_freezer_unfreezes_mobs"), () -> BlockDynamicsGameTestsModern::breakingFreezerUnfreezesMobs);
         event.register(Registries.TEST_FUNCTION, id("weak_redstone_signal_powers_freezer"), () -> BlockDynamicsGameTestsModern::weakRedstoneSignalPowersFreezer);
         event.register(Registries.TEST_FUNCTION, id("breeding_limit_blocks_over_limit"), () -> BlockDynamicsGameTestsModern::breedingLimitBlocksOverLimit);
+        event.register(Registries.TEST_FUNCTION, id("recipe_crafts_freezer"), () -> BlockDynamicsGameTestsModern::recipeCraftsFreezer);
+        event.register(Registries.TEST_FUNCTION, id("unfreeze_clears_velocity"), () -> BlockDynamicsGameTestsModern::unfreezeClearsVelocity);
     }
 
     @SubscribeEvent
@@ -47,6 +49,8 @@ public class GameTestRegistrarModern {
         registerTest(event, env, "breaking_freezer_unfreezes_mobs", 300);
         registerTest(event, env, "weak_redstone_signal_powers_freezer", 300);
         registerTest(event, env, "breeding_limit_blocks_over_limit", 300);
+        registerTest(event, env, "recipe_crafts_freezer", 200);
+        registerTest(event, env, "unfreeze_clears_velocity", 300);
     }
 
     private static Identifier id(String path) {

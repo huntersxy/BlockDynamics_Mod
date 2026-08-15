@@ -29,7 +29,8 @@
 # 只构建某个版本
 ./gradlew :1.21.1-neoforge:build
 
-# 跑 gametest（每个版本各有 5 个行为测试）
+# 跑 gametest（每个版本各有 7 个行为测试：冻结/解冻、双冻结器、拆块解冻、
+# 弱信号、繁殖限制、配方合成、解冻速度清零）
 ./gradlew :1.21.1-neoforge:runGameTestServer
 ./gradlew :1.21.11-neoforge:runGameTestServer
 ./gradlew :26.1.2-neoforge:runGameTestServer
