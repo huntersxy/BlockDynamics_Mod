@@ -41,7 +41,27 @@ Stonecutter 0.9.7 的机制是——
 - CI（`.github/workflows/build.yml`/`alpha.yml`）已按多版本布局重写：JDK 21 + JDK 25 双 setup，`ORG_GRADLE_PROJECT_org.gradle.java.installations.fromEnv=JDK21,JDK25` 传入工具链路径；`buildAndCollect` 收集 `build/libs/<mc版本>/blockd-<ver>+<mc>.jar`；alpha 工作流对每个游戏版本各发一个 Modrinth 版本（game_versions 按 jar 区分）。触发分支为 `multiversion`（改名需同步）。
 - `build.neoforge.gradle.kts`：`version = mod_version + "+" + mcVersion`（jar 名带版本后缀，三版本可区分）；新增 `buildAndCollect` Copy 任务。
 
-## 待办（本接手轮次）
+## ✅ 完成状态（本接手轮次全部完成）
+
+- 三个版本全部编译通过 + jar 打包（`buildAndCollect` → `build/libs/<mc>/blockd-<ver>+<mc>.jar`）
+- 1.21.1 gametest 5/5 通过（`runGameTestServer`）
+- 1.21.11 / 26.1 服务器启动验证：mod 正常加载、mixin 全部应用成功、正常关服
+- **运行时发现的额外修复**（编译期无法发现）：
+  - 1.21.11+ 方块注册必须用 `BLOCKS.registerBlock(...)`（旧 `register(Supplier)` 不调用
+    `BlockBehaviour.Properties.setId`，运行时抛 "Block id not set" / "Trying to access unbound value"）
+  - 该问题在本地 21.11/26.1 服务器启动时复现并修复
+- CI：push 到 `multiversion` 后 Build workflow 通过（1m54s），Alpha workflow 已向 Modrinth
+  发布 3 个 alpha（1.0.8-alpha.17d7b72+1.21.1 / +1.21.11 / +26.1，game_versions 各自对应）
+- 已提交 commit 17d7b72 并推送到 origin/multiversion
+
+## 遗留（可选后续）
+- 1.21.11/26.1 的 gametest 移植（新 registry 框架：Registries.TEST_FUNCTION + GameTestInstance/
+  TestData/TestEnvironmentDefinition）——工作量较大，当前 1.21.1 的 5 个行为测试已覆盖功能验证
+- actions v4 → v5（CI 里有 Node20 弃用警告，不影响运行）
+- 决定正式分支策略：multiversion 合并/改名为 main 后，alpha workflow 的 branches 列表需同步
+
+## 待办（历史，已全部完成）
+
 - [x] 定位并修复 active 版本编译根因
 - [x] 1.21.1 compile 通过
 - [ ] 1.21.11 / 26.1 compile 通过（进行中，26.1 首次要下载 NeoForge 26.1.0.19-beta）
