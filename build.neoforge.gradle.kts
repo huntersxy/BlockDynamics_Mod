@@ -24,8 +24,10 @@ data class VersionInfo(
 
 val versionInfo = mapOf(
     "1.21.1" to VersionInfo(neoForge = "21.1.248", mcRange = "[1.21.1]", parchmentMc = "1.21.1", parchmentMappings = "2024.11.17", java = 21, packFormat = 15),
-    "1.21.11" to VersionInfo(neoForge = "21.11.42", mcRange = "[1.21.11]", parchmentMc = "1.21.11", parchmentMappings = "2025.12.20", java = 21, packFormat = 15),
-    "26.1" to VersionInfo(neoForge = "26.1.0.19-beta", mcRange = "[26.1]", java = 25, packFormat = 34),
+    "1.21.11" to VersionInfo(neoForge = "21.11.42", mcRange = "[1.21.11]", parchmentMc = "1.21.11", parchmentMappings = "2025.12.20", java = 21, packFormat = 75),
+    "26.1" to VersionInfo(neoForge = "26.1.0.19-beta", mcRange = "[26.1]", java = 25, packFormat = 84),
+    "26.1.2" to VersionInfo(neoForge = "26.1.2.95", mcRange = "[26.1.2]", java = 25, packFormat = 84),
+    "26.2" to VersionInfo(neoForge = "26.2.0.59", mcRange = "[26.2]", java = 25, packFormat = 88),
 )
 val info = versionInfo[mcVersion] ?: error("Unsupported Minecraft version: $mcVersion (configured versions: ${versionInfo.keys})")
 
@@ -112,6 +114,15 @@ val loaderVersionRange = property("loader_version_range").toString()
 
 tasks.named<ProcessResources>("processResources") {
     dependsOn("stonecutterGenerate")
+    // expand() 的值不参与 up-to-date 检查，显式声明为输入，改版本表后能自动重跑
+    inputs.property("packFormat", info.packFormat)
+    inputs.property("modId", modId)
+    inputs.property("modName", modName)
+    inputs.property("modLicense", modLicense)
+    inputs.property("modVersion", modVersion)
+    inputs.property("mcRange", info.mcRange)
+    inputs.property("neoVersion", info.neoForge)
+    inputs.property("loaderVersionRange", loaderVersionRange)
     filesMatching("pack.mcmeta") {
         expand("pack_format" to info.packFormat, "mod_id" to modId)
     }

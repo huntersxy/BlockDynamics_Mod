@@ -61,7 +61,9 @@ jobs:
           # <mc>|<game_version>
           VERSIONS="1.21.1|1.21.1
           1.21.11|1.21.11
-          26.1|26.1"
+          26.1|26.1
+          26.1.2|26.1.2
+          26.2|26.2"
           FAILED=0
           NEW_IDS=""
           # here-string 而非管道：避免 while 在子 shell 里运行导致变量丢失

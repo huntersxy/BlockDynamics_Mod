@@ -4,9 +4,12 @@ package com.huntersxy.blockd.gametest;
 /*import com.huntersxy.blockd.Config;
 import com.huntersxy.blockd.item.Moditems;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.chicken.Chicken;
 import net.minecraft.world.entity.animal.cow.Cow;
@@ -20,13 +23,19 @@ import net.minecraft.world.phys.AABB;
 
 // 1.21.11+ 新 gametest 框架下的行为测试（注册见 GameTestRegistrarModern）。
 public class BlockDynamicsGameTestsModern {
+    // 按注册表 id 取实体类型：EntityType.COW/CHICKEN 常量在 26.2 移到了 EntityTypes 类，
+    // 用 BuiltInRegistries 查询对所有 21.11+ 版本通用（避免引入嵌套的版本标记）。
+    @SuppressWarnings("unchecked")
+    private static <E extends Entity> EntityType<E> entityType(String id) {
+        return (EntityType<E>) BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.fromNamespaceAndPath("minecraft", id));
+    }
 
     // 通电→冻结（NoAI + 完全静止）；断电→解冻（恢复重力下落）。
     public static void freezeOnPowerAndUnfreeze(GameTestHelper helper) {
         BlockPos freezer = new BlockPos(4, 12, 4);
         BlockPos power = freezer.offset(1, 0, 0);
         helper.setBlock(freezer, Moditems.GIVETAG_BLOCK.get());
-        Cow cow = helper.spawn(EntityType.COW, new BlockPos(4, 12, 6));
+        Cow cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
         final double[] yBeforeFreeze = new double[1];
 
         helper.startSequence()
@@ -52,8 +61,8 @@ public class BlockDynamicsGameTestsModern {
         BlockPos powerB = freezerB.offset(1, 0, 0);
         helper.setBlock(freezerA, Moditems.GIVETAG_BLOCK.get());
         helper.setBlock(freezerB, Moditems.GIVETAG_BLOCK.get());
-        Cow cowA = helper.spawn(EntityType.COW, new BlockPos(4, 12, 6));
-        Cow cowB = helper.spawn(EntityType.COW, new BlockPos(21, 12, 6));
+        Cow cowA = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
+        Cow cowB = helper.spawn(entityType("cow"), new BlockPos(21, 12, 6));
 
         helper.startSequence()
             .thenExecute(() -> {
@@ -81,7 +90,7 @@ public class BlockDynamicsGameTestsModern {
         BlockPos freezer = new BlockPos(4, 12, 4);
         BlockPos power = freezer.offset(1, 0, 0);
         helper.setBlock(freezer, Moditems.GIVETAG_BLOCK.get());
-        Cow cow = helper.spawn(EntityType.COW, new BlockPos(4, 12, 6));
+        Cow cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
 
         helper.startSequence()
             .thenExecute(() -> helper.setBlock(power, Blocks.REDSTONE_BLOCK))
@@ -100,7 +109,7 @@ public class BlockDynamicsGameTestsModern {
         BlockPos dust = freezer.offset(1, 0, 0);
         BlockPos stone = freezer.offset(1, 0, 1);
         helper.setBlock(freezer, Moditems.GIVETAG_BLOCK.get());
-        Cow cow = helper.spawn(EntityType.COW, new BlockPos(4, 12, 6));
+        Cow cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
 
         helper.startSequence()
             // 石头 + 通电拉杆（FACE=FLOOR 附着在石头上，强充能石头）
@@ -130,10 +139,10 @@ public class BlockDynamicsGameTestsModern {
         int oldMax = Config.maxMobsInChunk;
         Config.maxMobsInChunk = 1; // 测试内直接覆盖静态配置
         try {
-            Chicken a = helper.spawn(EntityType.CHICKEN, new BlockPos(5, 12, 5));
-            Chicken b = helper.spawn(EntityType.CHICKEN, new BlockPos(6, 12, 5));
-            helper.spawn(EntityType.COW, new BlockPos(5, 12, 6)); // 第 3 只
-            helper.spawn(EntityType.COW, new BlockPos(6, 12, 6)); // 第 4 只
+            Chicken a = helper.spawn(entityType("chicken"), new BlockPos(5, 12, 5));
+            Chicken b = helper.spawn(entityType("chicken"), new BlockPos(6, 12, 5));
+            helper.spawn(entityType("cow"), new BlockPos(5, 12, 6)); // 第 3 只
+            helper.spawn(entityType("cow"), new BlockPos(6, 12, 6)); // 第 4 只
 
             helper.startSequence()
                 .thenExecute(() -> {

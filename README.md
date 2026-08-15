@@ -16,6 +16,8 @@
 | 1.21.1 | 21.1.248 | 21 | 2024.11.17 |
 | 1.21.11 | 21.11.42 | 21 | 2025.12.20 |
 | 26.1 | 26.1.0.19-beta | 25 | - |
+| 26.1.2 | 26.1.2.95 | 25 | - |
+| 26.2 | 26.2.0.59 | 25 | - |
 
 版本表在 `build.neoforge.gradle.kts` 顶部的 `versionInfo` 中，新增版本只需加一行。
 
@@ -28,10 +30,12 @@
 # 只构建某个版本
 ./gradlew :1.21.1-neoforge:build
 
-# 跑 gametest（三个版本各有 5 个行为测试）
+# 跑 gametest（每个版本各有 5 个行为测试）
 ./gradlew :1.21.1-neoforge:runGameTestServer
 ./gradlew :1.21.11-neoforge:runGameTestServer
 ./gradlew :26.1-neoforge:runGameTestServer
+./gradlew :26.1.2-neoforge:runGameTestServer
+./gradlew :26.2-neoforge:runGameTestServer
 ```
 
 > 26.1 需要 JDK 25：本地可用 `org.gradle.java.installations.paths`（写入 `~/.gradle/gradle.properties`）或 `-Porg.gradle.java.installations.fromEnv=...` 指定；CI 里已通过 setup-java 安装。

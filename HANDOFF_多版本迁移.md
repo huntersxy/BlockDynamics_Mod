@@ -41,6 +41,24 @@ Stonecutter 0.9.7 的机制是——
 - CI（`.github/workflows/build.yml`/`alpha.yml`）已按多版本布局重写：JDK 21 + JDK 25 双 setup，`ORG_GRADLE_PROJECT_org.gradle.java.installations.fromEnv=JDK21,JDK25` 传入工具链路径；`buildAndCollect` 收集 `build/libs/<mc版本>/blockd-<ver>+<mc>.jar`；alpha 工作流对每个游戏版本各发一个 Modrinth 版本（game_versions 按 jar 区分）。触发分支为 `multiversion`（改名需同步）。
 - `build.neoforge.gradle.kts`：`version = mod_version + "+" + mcVersion`（jar 名带版本后缀，三版本可区分）；新增 `buildAndCollect` Copy 任务。
 
+## ✅ 新增版本支持：26.1.2 / 26.2
+
+- 版本：26.1.2 = NeoForge 26.1.2.95（正式版）、26.2 = NeoForge 26.2.0.59（正式版），
+  版本号取自官方 MDK（NeoForgeMDKs/MDK-26.1.2-ModDevGradle、MDK-26.2-ModDevGradle）。
+- API 差异：
+  - 26.1.2+ 移除了 DeferredRegister.Blocks 三参 registerBlock(String, Function, Properties)
+    重载 → 改用 Supplier<Properties> 版本（\`//? if <26.1.2\` 条件）。
+  - 26.2 把实体类型常量从 EntityType.COW 移到新类 EntityTypes.COW（Block/Blocks 同风格）
+    → gametest 改用 BuiltInRegistries.ENTITY_TYPE 按 id 查询（所有 21.11+ 通用，避免嵌套标记）。
+  - 注意：版本门控区内不能嵌套 \`//?\` 标记（外层门控内再放 if/else 会 Unclosed scope），
+    跨版本差异要么拆独立文件、要么用运行时查询/raw type 桥接。
+- 修正 pack_format：1.21.11=75、26.1/26.1.2=84、26.2=88（此前 1.21.11=15、26.1=34 是错的，
+  不匹配只打日志不影响加载，但已修正）；processResources 的 expand 值不参与增量检查，
+  已显式 inputs.property 声明，改版本表会自动重跑。
+- 配方覆盖：versions/26.1.2-neoforge、versions/26.2-neoforge 各加字符串格式配方。
+- 验证：5 版本编译全过；gametest 1.21.1 5/5，1.21.11/26.1/26.1.2/26.2 各 6/6。
+- alpha workflow 的 VERSIONS 列表已加 26.1.2/26.2（发布 5 个 alpha，旧 alpha 自动清理）。
+
 ## ✅ 完成状态（本接手轮次全部完成）
 
 - 三个版本全部编译通过 + jar 打包（`buildAndCollect` → `build/libs/<mc>/blockd-<ver>+<mc>.jar`）
