@@ -1,6 +1,7 @@
 name: Alpha to Modrinth
 
-# 推送 multiversion 分支时自动发布全部版本的 alpha 到 Modrinth。
+# 推送 multiversion 分支时自动发布全部版本的 alpha 到 Modrinth，
+# 并删除此前的旧 alpha（只保留本次上传的；beta/release 版本不受影响）。
 # 分支改名后请同步修改下面的 branches 列表。
 on:
   push:
@@ -62,7 +63,9 @@ jobs:
           1.21.11|1.21.11
           26.1|26.1"
           FAILED=0
-          echo "$VERSIONS" | while IFS='|' read -r DIR MC; do
+          NEW_IDS=""
+          # here-string 而非管道：避免 while 在子 shell 里运行导致变量丢失
+          while IFS='|' read -r DIR MC; do
             JAR=$(ls build/libs/${DIR}/blockd-*.jar | grep -v sources | head -1 || true)
             if [ -z "$JAR" ]; then echo "!! No jar for ${DIR}"; FAILED=1; continue; fi
             echo "Uploading ${JAR} (game ${MC}) as ${ALPHA_VERSION}"
@@ -75,10 +78,25 @@ jobs:
               -F "data=@/tmp/alpha-data.json" \
               -F "jar=@${JAR}")
             if echo "$RESP" | grep -q '"id"'; then
-              echo "OK: $(echo "$RESP" | jq -r .version_number)"
+              ID=$(echo "$RESP" | jq -r .id)
+              echo "OK: ${ID}"
+              NEW_IDS="${NEW_IDS} ${ID}"
             else
               echo "FAILED for ${MC}: $RESP"
               FAILED=1
             fi
+          done <<< "$VERSIONS"
+
+          # 删除旧 alpha（version_type=alpha），只保留本次上传的；beta/release 一律不动
+          echo "Cleaning up previous alpha versions..."
+          ALL=$(curl -s -H "Authorization: Bearer ${MODRINTH_TOKEN}" -H "User-Agent: blockd-alpha-ci" "https://api.modrinth.com/v2/project/phZGXedL/version")
+          echo "$ALL" | jq -r '.[] | select(.version_type == "alpha") | .id' | while read -r OLD; do
+            case " ${NEW_IDS} " in
+              *" ${OLD} "*) continue ;;
+            esac
+            echo "Deleting old alpha ${OLD}"
+            curl -s -X DELETE "https://api.modrinth.com/v2/version/${OLD}" \
+              -H "Authorization: Bearer ${MODRINTH_TOKEN}" \
+              -H "User-Agent: blockd-alpha-ci" || echo "  !! delete failed for ${OLD}"
           done
           exit $FAILED
