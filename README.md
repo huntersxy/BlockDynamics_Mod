@@ -28,8 +28,10 @@
 # 只构建某个版本
 ./gradlew :1.21.1-neoforge:build
 
-# 跑 1.21.1 的 gametest（5 个行为测试）
+# 跑 gametest（三个版本各有 5 个行为测试）
 ./gradlew :1.21.1-neoforge:runGameTestServer
+./gradlew :1.21.11-neoforge:runGameTestServer
+./gradlew :26.1-neoforge:runGameTestServer
 ```
 
 > 26.1 需要 JDK 25：本地可用 `org.gradle.java.installations.paths`（写入 `~/.gradle/gradle.properties`）或 `-Porg.gradle.java.installations.fromEnv=...` 指定；CI 里已通过 setup-java 安装。
@@ -41,6 +43,9 @@
 规则：
 - 修改源码时保持"当前 active 版本分支为普通代码、其余分支为 `/* ... */` 块注释"的格式，否则 active 版本编译会失败；
 - 编译非 active 版本时，Stonecutter 会处理根目录 `src/main` 并生成 `versions/<id>/build/generated/stonecutter` 供该版本编译使用。
+- 某些资源（如配方 JSON 的 ingredient 格式在 1.21.11 变了）需要按版本区分时，把覆盖文件放进 `versions/<mc>/src/main/resources/...`，Stonecutter 会把它合并进该版本的构建（active 版本用根目录文件）。
+- **注意：被 `//? if` 门控包裹的源码区域里不能出现块注释（`/* */`，javadoc 也算），否则 stitcher 解析会报 Unclosed scope。**
+- gametest 分两套：`BlockDynamicsGameTests`（1.21.1 旧框架，`<1.21.11` 门控）和 `BlockDynamicsGameTestsModern` + `GameTestRegistrarModern`（1.21.11+ 新 registry 框架，`>=1.21.11` 门控）；测试内容一致。
 
 ## 分支策略（旧版废弃）
 

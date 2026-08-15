@@ -54,9 +54,19 @@ Stonecutter 0.9.7 的机制是——
   发布 3 个 alpha（1.0.8-alpha.17d7b72+1.21.1 / +1.21.11 / +26.1，game_versions 各自对应）
 - 已提交 commit 17d7b72 并推送到 origin/multiversion
 
-## 遗留（可选后续）
-- 1.21.11/26.1 的 gametest 移植（新 registry 框架：Registries.TEST_FUNCTION + GameTestInstance/
-  TestData/TestEnvironmentDefinition）——工作量较大，当前 1.21.1 的 5 个行为测试已覆盖功能验证
+## ✅ gametest 已移植（后续轮次完成）
+
+1.21.11/26.1 的新框架移植完成并全部通过：
+- 新框架机制：测试函数（Consumer<GameTestHelper>）注册进 TEST_FUNCTION 内置注册表
+  （RegisterEvent 阶段）；测试实例（FunctionGameTestInstance + TestData）注册进 TEST_INSTANCE
+  数据包注册表（RegisterGameTestsEvent 阶段，环境自建 blockd:default 空环境）。
+- 新增 `BlockDynamicsGameTestsModern.java` 与 `GameTestRegistrarModern.java`（`//? if >=1.21.11` 门控）。
+- 21.11 与 26.1 的差异（TestEnvironmentDefinition 泛型化）用 raw type 桥接，无版本标记。
+- 踩坑：门控区域内不能有块注释（javadoc 也算），否则 stitcher 报 "Unclosed scope"；
+  `//?` 门控区注释里的 `/* */` 文本同样会触发。
+- 顺手修复：recipe JSON 的 ingredient 格式 1.21.11+ 改为字符串形式（`"minecraft:egg"`），
+  用 versions/<mc>/src/main/resources 覆盖文件实现（1.21.1 保持 {"item":...}）。
+- 验证：三个版本 runGameTestServer 全部通过（1.21.1 5/5；1.21.11、26.1 各 5+1=6/6 含 vanilla always_pass）。
 - actions v4 → v5（CI 里有 Node20 弃用警告，不影响运行）
 - 决定正式分支策略：multiversion 合并/改名为 main 后，alpha workflow 的 branches 列表需同步
 
