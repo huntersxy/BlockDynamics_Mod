@@ -1,25 +1,58 @@
+# BlockDynamics_Mod (blockd)
 
-Installation information
-=======
+实体冻结器（Entity Freezer）与繁殖限制（Breeding Limiter）模组，基于 **NeoForge**。
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+- **实体冻结器方块**：红石通电时冻结周围生物（NoAI + 完全静止，含重力/水流/击退免疫），断电自动解冻。
+  - 状态存入方块 BlockState（`POWERED`），多台冻结器互不干扰，拆方块也会解冻。
+  - 支持弱信号（红石粉）。
+- **繁殖限制**：父代周围 17×17×17 范围内 Mob 数量超过配置上限（`maxMobsInChunk`，默认 10）时阻止产仔。
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+## 支持版本
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+一套源码编译多个版本（[Stonecutter](https://stonecutter.kikugie.dev/) + ModDevGradle 2.0.141）：
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
+| Minecraft | NeoForge | Java | Parchment |
+|---|---|---|---|
+| 1.21.1 | 21.1.248 | 21 | 2024.11.17 |
+| 1.21.11 | 21.11.42 | 21 | 2025.12.20 |
+| 26.1 | 26.1.0.19-beta | 25 | - |
 
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+版本表在 `build.neoforge.gradle.kts` 顶部的 `versionInfo` 中，新增版本只需加一行。
+
+## 构建
+
+```bash
+# 一次构建全部版本，产物收集到 build/libs/<mc版本>/
+./gradlew buildAndCollect
+
+# 只构建某个版本
+./gradlew :1.21.1-neoforge:build
+
+# 跑 1.21.1 的 gametest（5 个行为测试）
+./gradlew :1.21.1-neoforge:runGameTestServer
+```
+
+> 26.1 需要 JDK 25：本地可用 `org.gradle.java.installations.paths`（写入 `~/.gradle/gradle.properties`）或 `-Porg.gradle.java.installations.fromEnv=...` 指定；CI 里已通过 setup-java 安装。
+
+### 版本差异与条件注释
+
+不同版本间的 API 差异用 Stonecutter 的 `//? if` 条件注释写在源码里（例如 `neighborChanged` 的 6/7 参数签名、NBT 读写 API、`isClientSide` 字段/方法、`new ItemStack(this)` 等）。**仓库里的源码始终处于 `stonecutter active` 版本（1.21.1）的状态**：1.21.1 分支的代码保持普通代码，其他版本分支用块注释包住；切版本/编译其他版本时由 Stonecutter 自动重写。
+
+规则：
+- 修改源码时保持"当前 active 版本分支为普通代码、其余分支为 `/* ... */` 块注释"的格式，否则 active 版本编译会失败；
+- 编译非 active 版本时，Stonecutter 会处理根目录 `src/main` 并生成 `versions/<id>/build/generated/stonecutter` 供该版本编译使用。
+
+## 分支策略（旧版废弃）
+
+旧仓库按"一个版本一个分支"维护（`1.20.1` / `1.21.1` / `1.21.11` / `26.1` / `master`），现已改为 **Stonecutter 多版本单分支**（`multiversion`，功能基线 = 原 `1.21.1` 分支）。旧分支保留在远端供参考，不再维护。
+
+## 自动发布
+
+- `.github/workflows/build.yml`：push/PR 全版本构建。
+- `.github/workflows/alpha.yml`：push 到 `multiversion` 时以 `<mod_version>-alpha.<commit7>` 发布全部版本的 alpha 到 [Modrinth](https://modrinth.com/mod/blockdynamics_mod)。
+
+## 配置
+
+`blockd-common.toml`（首次启动生成）：
+- `maxMobsInChunk`：区块内生物数量上限（繁殖限制），默认 10。
+- `givetagBlockRange`：冻结器作用半径，默认 8。

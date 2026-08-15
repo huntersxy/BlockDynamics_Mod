@@ -39,3 +39,9 @@ run/
 repo/
 !**/src/**/repo/
 /.trae
+
+# Stonecutter 版本子项目产物
+versions/*/build/
+versions/*/run/
+versions/*/.gradle/
+versions/*/src/generated/

@@ -14,6 +14,10 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nonnull;
+//? if >=1.21.11 {
+/*import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.redstone.Orientation;
+ *///?}
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -23,7 +27,7 @@ import java.util.function.Consumer;
  * <p>修复要点：
  * <ul>
  *   <li>充能状态存入 BlockState 的 POWERED 属性（按方块位置持久化到区块），
- *       不再使用 Block 实例字段（1.21.1 方块是全局单例，实例字段会被所有
+ *       不再使用 Block 实例字段（方块是全局单例，实例字段会被所有
  *       同名方块共享，导致多个冻结器互相干扰）；</li>
  *   <li>用 getBestNeighborSignal 检测弱信号（红石粉也能激活）；</li>
  *   <li>onPlace 处理"贴着已通电位置放置"的边沿；</li>
@@ -47,11 +51,16 @@ public class Givetagblock extends Block {
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
         // 放置方块本身不会触发 neighborChanged，这里补一次对拍（贴着已通电位置放置也能生效）
+        //? if <1.21.11 {
         if (!level.isClientSide && !oldState.is(this)) {
+        //?} else {
+        /*if (!level.isClientSide() && !oldState.is(this)) {
+         *///?}
             reconcilePower(level, pos, state);
         }
     }
 
+    //? if <1.21.11 {
     @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
@@ -59,7 +68,18 @@ public class Givetagblock extends Block {
             reconcilePower(level, pos, state);
         }
     }
+    //?}
+    //? if >=1.21.11 {
+    /*@Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, Orientation orientation, boolean isMoving) {
+        super.neighborChanged(state, level, pos, neighborBlock, orientation, isMoving);
+        if (!level.isClientSide()) {
+            reconcilePower(level, pos, state);
+        }
+    }
+    *///?}
 
+    //? if <1.21.11 {
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         // 方块被破坏/替换时解冻范围内的实体，避免"拆除冻结器后生物永久冻结"
@@ -68,6 +88,16 @@ public class Givetagblock extends Block {
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
+    //?}
+    //? if >=1.21.11 {
+    /*@Override
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
+        // 1.21.11+ 用 affectNeighborsAfterRemoval 取代 onRemove（仅在方块被其他方块替换时触发）
+        if (state.getValue(POWERED)) {
+            executeCleantag(level, pos);
+        }
+    }
+    *///?}
 
     /**
      * 将实际红石信号与方块状态对拍，仅在边沿变化时执行冻结/解冻。
@@ -121,7 +151,12 @@ public class Givetagblock extends Block {
         List<ItemStack> drops = super.getDrops(state, builder);
         // 确保方块掉落
         drops.clear();
+        //? if <26.1 {
         drops.add(new ItemStack(this));
+        //?}
+        //? if >=26.1 {
+        /*drops.add(new ItemStack(this.asItem()));
+        *///?}
         return drops;
     }
 }

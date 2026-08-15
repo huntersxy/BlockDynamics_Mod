@@ -5,20 +5,21 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
+//? if >=1.21.11 {
+/*import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+*///?}
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * 冻结状态直接存在实体上（NBT 持久化），不再依赖外部静态集合：
- * 区块重载后从 NBT 恢复 freeze_ai，travel 注入每 tick 强制生效。
- */
 @Mixin(LivingEntity.class)
 public class MixinLivingEntity implements ILivingEntity {
     @Unique
     private boolean freeze_ai;
+
     @Unique
     private static final String NBT_FREEZE_AI = "blockd_freeze_ai";
 
@@ -57,7 +58,11 @@ public class MixinLivingEntity implements ILivingEntity {
     @Inject(method = "travel", at = @At("HEAD"), cancellable = true)
     private void blockd$freezeMovement(Vec3 travelVector, CallbackInfo ci) {
         LivingEntity self = blockd$self();
+        //? if <1.21.11 {
         if (freeze_ai && !self.level().isClientSide) {
+        //?} else {
+        /*if (freeze_ai && !self.level().isClientSide()) {
+         *///?}
             self.setDeltaMovement(0, 0, 0);
             if ((Object) this instanceof Mob mob && !mob.isNoAi()) {
                 mob.setNoAi(true);
@@ -66,6 +71,7 @@ public class MixinLivingEntity implements ILivingEntity {
         }
     }
 
+    //? if <1.21.11 {
     @Inject(method = "addAdditionalSaveData", at = @At("HEAD"))
     private void blockd$writeFreezeAiToNbt(CompoundTag nbt, CallbackInfo ci) {
         nbt.putBoolean(NBT_FREEZE_AI, freeze_ai);
@@ -77,4 +83,27 @@ public class MixinLivingEntity implements ILivingEntity {
             freeze_ai = nbt.getBoolean(NBT_FREEZE_AI);
         }
     }
+    //?}
+    //? if 1.21.11 {
+    /*@Inject(method = "addAdditionalSaveData(Lnet/minecraft/world/level/storage/ValueOutput;)V", at = @At("TAIL"))
+    private void blockd$writeFreezeAiToNbt(ValueOutput output, CallbackInfo ci) {
+        output.putBoolean(NBT_FREEZE_AI, this.freeze_ai);
+    }
+
+    @Inject(method = "readAdditionalSaveData(Lnet/minecraft/world/level/storage/ValueInput;)V", at = @At("TAIL"))
+    private void blockd$readFreezeAiFromNbt(ValueInput input, CallbackInfo ci) {
+        this.freeze_ai = input.getBooleanOr(NBT_FREEZE_AI, false);
+    }
+    *///?}
+    //? if >=26.1 {
+    /*@Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
+    private void blockd$writeFreezeAiToNbt(ValueOutput output, CallbackInfo ci) {
+        output.putBoolean(NBT_FREEZE_AI, this.freeze_ai);
+    }
+
+    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
+    private void blockd$readFreezeAiFromNbt(ValueInput input, CallbackInfo ci) {
+        this.freeze_ai = input.getBooleanOr(NBT_FREEZE_AI, false);
+    }
+    *///?}
 }

@@ -1,5 +1,7 @@
 package com.huntersxy.blockd.gametest;
 
+//? if <1.21.11 {
+
 import com.huntersxy.blockd.Config;
 import com.huntersxy.blockd.item.Moditems;
 import net.minecraft.core.BlockPos;
@@ -168,3 +170,4 @@ public class BlockDynamicsGameTests {
         }
     }
 }
+//?}

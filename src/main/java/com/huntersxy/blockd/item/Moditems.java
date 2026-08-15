@@ -14,14 +14,15 @@ public class Moditems {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MOD_ID);
 
 
-    // 注册方块
     // 注册方块 - 修改为泥土硬度，空手可破坏
-    public static final DeferredBlock<Givetagblock> GIVETAG_BLOCK = BLOCKS.register("givetag_block",
-        () -> new Givetagblock(BlockBehaviour.Properties.of()
+    // 注意：用 registerBlock 而非 register：1.21.11+ 的 Properties 需要在注册时 setId，
+    // 旧 register(Supplier) 不会设置 id，运行时抛 "Block id not set"。
+    public static final DeferredBlock<Givetagblock> GIVETAG_BLOCK = BLOCKS.registerBlock("givetag_block",
+        Givetagblock::new,
+        BlockBehaviour.Properties.of()
                 .strength(0.5f)  // 泥土硬度
                 // 移除 requiresCorrectToolForDrops() 使空手可掉落
-            
-        ));
+        );
 
 
     // 注册方块物品（以便能在物品栏中显示）
