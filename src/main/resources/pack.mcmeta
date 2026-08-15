@@ -3,6 +3,8 @@
     "description": {
       "text": "blockd resources"
     },
-    "pack_format": ${pack_format}
+    "pack_format": ${pack_format},
+    "min_format": ${pack_format},
+    "max_format": ${pack_format}
   }
 }
