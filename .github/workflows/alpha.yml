@@ -1,7 +1,11 @@
 name: Alpha to Modrinth
 
-# 推送 multiversion 分支时自动发布全部版本的 alpha 到 Modrinth，
-# 并删除此前的旧 alpha（只保留本次上传的；beta/release 版本不受影响）。
+# 推送 multiversion 分支时自动发布全部版本的 alpha 到 Modrinth。
+# 平台更新日志读取仓库根目录 CHANGELOG.md 中 "## [版本号]" 对应小节。
+# 旧 alpha 清理规则：
+# - 基础版本与本次相同（同版本反复构建）→ 删除，只保留本次上传的；
+# - 版本号跳变（如 1.8→1.9、1.8.1→1.8.2）→ 不删除：旧版本号下最新一组 alpha
+#   晋级为 beta 通道（更新日志取 CHANGELOG.md 对应小节），更早的同版本 alpha 仍删除。
 # 分支改名后请同步修改下面的 branches 列表。
 on:
   push:
@@ -57,6 +61,22 @@ jobs:
           ALPHA_VERSION: ${{ steps.version.outputs.alpha_version }}
         run: |
           set -e
+          BASE_VER="${ALPHA_VERSION%-alpha.*}"
+
+          # 提取 CHANGELOG.md 中 "## [<版本号>]" 小节（到下一个 ## [ 为止），无则输出空
+          changelog_section() {
+            [ -f CHANGELOG.md ] || return 0
+            awk -v ver="$1" 'index($0, "## [" ver "]") == 1 { flag = 1; next } /^## \[/ { flag = 0 } flag { print }' CHANGELOG.md
+          }
+
+          # 平台更新日志：优先用 CHANGELOG.md 对应小节，缺失时回退为通用文案
+          CHANGELOG_TEXT="Automatic alpha build from commit ${{ github.sha }}"
+          SECTION=$(changelog_section "$BASE_VER")
+          if [ -n "$SECTION" ]; then
+            CHANGELOG_TEXT=$(printf '%s\n\n---\n自动 alpha 构建：commit %s' "$SECTION" "${{ github.sha }}")
+          fi
+          echo ">>> Changelog for ${BASE_VER}:"; echo "$CHANGELOG_TEXT"; echo "<<<"
+
           # 每个游戏版本发布一个 alpha（同一 alpha 版本号，游戏版本分开）
           # <mc>|<game_version>
           VERSIONS="1.21.1|1.21.1
@@ -70,8 +90,8 @@ jobs:
             JAR=$(ls build/libs/${DIR}/blockd-*.jar | grep -v sources | head -1 || true)
             if [ -z "$JAR" ]; then echo "!! No jar for ${DIR}"; FAILED=1; continue; fi
             echo "Uploading ${JAR} (game ${MC}) as ${ALPHA_VERSION}"
-            jq -n --arg v "$ALPHA_VERSION" --arg sha "${{ github.sha }}" --arg mc "$MC" \
-              '{project_id:"phZGXedL", name:("Entity Freezer & Limit breeding " + $v + " (" + $mc + ")"), version_number:($v + "+" + $mc), changelog:("Automatic alpha build from commit " + $sha), dependencies:[], game_versions:[$mc], release_channel:"alpha", loaders:["neoforge"], featured:false, status:"listed", file_parts:["jar"], primary_file:"jar"}' \
+            jq -n --arg v "$ALPHA_VERSION" --arg sha "${{ github.sha }}" --arg mc "$MC" --arg changelog "$CHANGELOG_TEXT" \
+              '{project_id:"phZGXedL", name:("Entity Freezer & Limit breeding " + $v + " (" + $mc + ")"), version_number:($v + "+" + $mc), changelog:$changelog, dependencies:[], game_versions:[$mc], release_channel:"alpha", loaders:["neoforge"], featured:false, status:"listed", file_parts:["jar"], primary_file:"jar"}' \
               > /tmp/alpha-data.json
             RESP=$(curl -s -X POST https://api.modrinth.com/v2/version \
               -H "Authorization: Bearer ${MODRINTH_TOKEN}" \
@@ -88,16 +108,53 @@ jobs:
             fi
           done <<< "$VERSIONS"
 
-          # 删除旧 alpha（version_type=alpha），只保留本次上传的；beta/release 一律不动
-          echo "Cleaning up previous alpha versions..."
+          # ---------- 处理旧 alpha：版本号跳变检测 ----------
+          echo "Handling previous alpha versions..."
           ALL=$(curl -s -H "Authorization: Bearer ${MODRINTH_TOKEN}" -H "User-Agent: blockd-alpha-ci" "https://api.modrinth.com/v2/project/phZGXedL/version")
-          echo "$ALL" | jq -r '.[] | select(.version_type == "alpha") | .id' | while read -r OLD; do
-            case " ${NEW_IDS} " in
-              *" ${OLD} "*) continue ;;
-            esac
-            echo "Deleting old alpha ${OLD}"
-            curl -s -X DELETE "https://api.modrinth.com/v2/version/${OLD}" \
-              -H "Authorization: Bearer ${MODRINTH_TOKEN}" \
-              -H "User-Agent: blockd-alpha-ci" || echo "  !! delete failed for ${OLD}"
-          done
+
+          # 同基础版本的旧 alpha → 删除（排除本次刚上传的）
+          echo "$ALL" | jq -r --arg base "$BASE_VER" \
+            '.[] | select(.version_type == "alpha") | select(.version_number | startswith($base + "-alpha.")) | .id' \
+            | while read -r OLD; do
+              case " ${NEW_IDS} " in *" ${OLD} "*) continue ;; esac
+              echo "Deleting superseded alpha ${OLD} (same base ${BASE_VER})"
+              curl -s -X DELETE "https://api.modrinth.com/v2/version/${OLD}" \
+                -H "Authorization: Bearer ${MODRINTH_TOKEN}" \
+                -H "User-Agent: blockd-alpha-ci" || echo "  !! delete failed for ${OLD}"
+            done
+
+          # 旧基础版本的 alpha（版本号跳变）：
+          # TSV 列 = date_added / alpha组标识(去掉+游戏版本) / 基础版本 / id / version_number
+          echo "$ALL" | jq -r --arg base "$BASE_VER" \
+            '.[] | select(.version_type == "alpha") | select((.version_number | startswith($base + "-alpha.")) | not)
+             | [(.date_published // ""), (.version_number | sub("[+].*$"; "")), (.version_number | sub("-alpha[.].*$"; "")), .id, .version_number] | @tsv' \
+            > /tmp/old-base-alphas.tsv
+
+          if [ -s /tmp/old-base-alphas.tsv ]; then
+            # 每个旧基础版本保留 date_added 最大的一组 alpha（ISO 时间戳可按字符串比较）
+            KEEP_GROUPS=$(awk -F'\t' '{ if ($1 > max[$3]) { max[$3] = $1; best[$3] = $2 } } END { for (b in best) print best[b] }' /tmp/old-base-alphas.tsv)
+            while IFS=$'\t' read -r DATE GROUP OLD_BASE OLDID VNUM; do
+              if printf '%s\n' "$KEEP_GROUPS" | grep -Fxq "$GROUP"; then
+                echo "Version jump ${OLD_BASE} -> ${BASE_VER}: promoting ${VNUM} (${OLDID}) to beta"
+                PROMOTE_BODY='{"version_type":"beta"}'
+                OLD_SECTION=$(changelog_section "$OLD_BASE")
+                if [ -n "$OLD_SECTION" ]; then
+                  PROMOTE_BODY=$(jq -n --arg c "$OLD_SECTION" '{version_type:"beta", changelog:$c}')
+                fi
+                RESP=$(curl -s -X PATCH "https://api.modrinth.com/v2/version/${OLDID}" \
+                  -H "Authorization: Bearer ${MODRINTH_TOKEN}" \
+                  -H "User-Agent: blockd-alpha-ci" \
+                  -H "Content-Type: application/json" \
+                  -d "$PROMOTE_BODY")
+                if ! echo "$RESP" | grep -q '"id"'; then
+                  echo "  !! promote failed for ${OLDID}: $RESP"
+                fi
+              else
+                echo "Deleting older alpha ${VNUM} (${OLDID}) of old base ${OLD_BASE}"
+                curl -s -X DELETE "https://api.modrinth.com/v2/version/${OLDID}" \
+                  -H "Authorization: Bearer ${MODRINTH_TOKEN}" \
+                  -H "User-Agent: blockd-alpha-ci" || echo "  !! delete failed for ${OLDID}"
+              fi
+            done < /tmp/old-base-alphas.tsv
+          fi
           exit $FAILED

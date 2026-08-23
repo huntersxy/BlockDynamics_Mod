@@ -4,8 +4,16 @@
 
 - **实体冻结器方块**：红石通电时冻结周围生物（NoAI + 完全静止，含重力/水流/击退免疫），断电自动解冻。
   - 状态存入方块 BlockState（`POWERED`），多台冻结器互不干扰，拆方块也会解冻。
+  - 冻结按引用计数：范围重叠的多台冻结器共同冻结同一生物时，其中一台断电不会误解冻，全部断电才解冻。
   - 支持弱信号（红石粉）。
 - **繁殖限制**：父代周围 17×17×17 范围内 Mob 数量超过配置上限（`maxMobsInChunk`，默认 10）时阻止产仔。
+
+## 已知行为 / 限制
+
+- 冻结是"通电瞬间快照"：通电之后再走进范围内的生物不会被冻结（红石边沿触发，不持续扫描）。
+- 被其他模组/指令传送走的冻结生物会带着冻结标志（存 NBT），不会被自动找回；重新用冻结器覆盖一次再断电可解除。
+- 冻结会记录生物原本的 NoAI 状态并在解冻时原样恢复：原生 NoAI 生物（地图/刷怪笼生物）不会被误唤醒，其他模组冻结前设置的 NoAI 也不会被清掉。若其他模组在冻结期间又修改 NoAI，解冻时以冻结前的快照为准。
+- 冻结计数存实体 NBT（`blockd_freeze_count` + `blockd_freeze_was_noai`，仅冻结中才写入）；旧存档的 `blockd_freeze_ai` boolean 字段可正常读取。
 
 ## 支持版本
 
@@ -29,8 +37,8 @@
 # 只构建某个版本
 ./gradlew :1.21.1-neoforge:build
 
-# 跑 gametest（每个版本各有 7 个行为测试：冻结/解冻、双冻结器、拆块解冻、
-# 弱信号、繁殖限制、配方合成、解冻速度清零）
+# 跑 gametest（每个版本各有 9 个行为测试：冻结/解冻、双冻结器、重叠冻结器引用计数、
+# 拆块解冻、原生 NoAI 保持、弱信号、繁殖限制、配方合成、解冻速度清零）
 ./gradlew :1.21.1-neoforge:runGameTestServer
 ./gradlew :1.21.11-neoforge:runGameTestServer
 ./gradlew :26.1.2-neoforge:runGameTestServer
@@ -57,7 +65,8 @@
 ## 自动发布
 
 - `.github/workflows/build.yml`：push/PR 全版本构建。
-- `.github/workflows/alpha.yml`：push 到 `multiversion` 时以 `<mod_version>-alpha.<commit7>` 发布全部版本的 alpha 到 [Modrinth](https://modrinth.com/mod/blockdynamics_mod)。
+- `.github/workflows/alpha.yml`：push 到 `multiversion` 时以 `<mod_version>-alpha.<commit7>` 发布全部版本的 alpha 到 [Modrinth](https://modrinth.com/mod/blockdynamics_mod)。平台更新日志读取 `CHANGELOG.md` 中对应版本（`## [版本号]`）的小节，小节缺失时回退为通用文案。
+- 旧 alpha 清理规则：**同版本号**的旧 alpha 直接删除（只留最新构建）；**版本号跳变**（如 1.8→1.9、1.8.1→1.8.2）时不删除——旧版本号下最新一组 alpha 自动晋级为 beta 通道（更新日志同样取自 `CHANGELOG.md`），更早的同版本 alpha 仍会被清理。
 
 ## 配置
 
