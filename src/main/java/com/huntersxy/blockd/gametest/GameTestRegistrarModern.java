@@ -32,7 +32,9 @@ public class GameTestRegistrarModern {
         }
         event.register(Registries.TEST_FUNCTION, id("freeze_on_power_and_unfreeze"), () -> BlockDynamicsGameTestsModern::freezeOnPowerAndUnfreeze);
         event.register(Registries.TEST_FUNCTION, id("two_freezers_stay_independent"), () -> BlockDynamicsGameTestsModern::twoFreezersStayIndependent);
+        event.register(Registries.TEST_FUNCTION, id("overlapping_freezers_refcount_freeze"), () -> BlockDynamicsGameTestsModern::overlappingFreezersRefCountFreeze);
         event.register(Registries.TEST_FUNCTION, id("breaking_freezer_unfreezes_mobs"), () -> BlockDynamicsGameTestsModern::breakingFreezerUnfreezesMobs);
+        event.register(Registries.TEST_FUNCTION, id("native_noai_mob_not_awakened_by_unfreeze"), () -> BlockDynamicsGameTestsModern::nativeNoAiMobNotAwakenedByUnfreeze);
         event.register(Registries.TEST_FUNCTION, id("weak_redstone_signal_powers_freezer"), () -> BlockDynamicsGameTestsModern::weakRedstoneSignalPowersFreezer);
         event.register(Registries.TEST_FUNCTION, id("breeding_limit_blocks_over_limit"), () -> BlockDynamicsGameTestsModern::breedingLimitBlocksOverLimit);
         event.register(Registries.TEST_FUNCTION, id("recipe_crafts_freezer"), () -> BlockDynamicsGameTestsModern::recipeCraftsFreezer);
@@ -46,7 +48,9 @@ public class GameTestRegistrarModern {
         Holder env = event.registerEnvironment(id("default"), new TestEnvironmentDefinition.AllOf());
         registerTest(event, env, "freeze_on_power_and_unfreeze", 300);
         registerTest(event, env, "two_freezers_stay_independent", 400);
+        registerTest(event, env, "overlapping_freezers_refcount_freeze", 400);
         registerTest(event, env, "breaking_freezer_unfreezes_mobs", 300);
+        registerTest(event, env, "native_noai_mob_not_awakened_by_unfreeze", 300);
         registerTest(event, env, "weak_redstone_signal_powers_freezer", 300);
         registerTest(event, env, "breeding_limit_blocks_over_limit", 300);
         registerTest(event, env, "recipe_crafts_freezer", 200);

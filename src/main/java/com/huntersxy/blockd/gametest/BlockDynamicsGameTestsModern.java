@@ -86,6 +86,32 @@ public class BlockDynamicsGameTestsModern {
             .thenSucceed();
     }
 
+    // 两台冻结器范围重叠、冻结同一生物：一台断电不应解冻另一台仍在冻结的生物（引用计数，
+    // boolean 实现在此场景会错误解冻）。
+    public static void overlappingFreezersRefCountFreeze(GameTestHelper helper) {
+        BlockPos freezerA = new BlockPos(4, 12, 4);
+        BlockPos freezerB = new BlockPos(8, 12, 8); // 与 A 相距 4 格，±8 范围重叠
+        BlockPos powerA = freezerA.offset(1, 0, 0);
+        BlockPos powerB = freezerB.offset(1, 0, 0);
+        helper.setBlock(freezerA, Moditems.GIVETAG_BLOCK.get());
+        helper.setBlock(freezerB, Moditems.GIVETAG_BLOCK.get());
+        Cow cow = helper.spawn(entityType("cow"), new BlockPos(6, 12, 6)); // 两台共同覆盖
+
+        helper.startSequence()
+            .thenExecute(() -> helper.setBlock(powerA, Blocks.REDSTONE_BLOCK))
+            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), "A 通电后生物应被冻结"))
+            // B 也通电：同一生物被两台冻结器共同冻结（计数 2）
+            .thenExecute(() -> helper.setBlock(powerB, Blocks.REDSTONE_BLOCK))
+            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), "B 通电后生物仍应冻结"))
+            // 关键场景：B 断电（A 仍通电）——boolean 实现会错误解冻共同范围内的生物
+            .thenExecute(() -> helper.setBlock(powerB, Blocks.AIR))
+            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), "B 断电后 A 仍通电，生物不应解冻"))
+            // A 也断电：最后一个引用释放，才真正解冻
+            .thenExecute(() -> helper.setBlock(powerA, Blocks.AIR))
+            .thenExecuteAfter(10, () -> helper.assertTrue(!cow.isNoAi(), "全部断电后生物应解除冻结"))
+            .thenSucceed();
+    }
+
     // 直接挖掉冻结器也应解冻范围内生物（旧实现无 onRemove 处理，必挂）。
     public static void breakingFreezerUnfreezesMobs(GameTestHelper helper) {
         BlockPos freezer = new BlockPos(4, 12, 4);
@@ -101,6 +127,24 @@ public class BlockDynamicsGameTestsModern {
                 helper.setBlock(power, Blocks.AIR);
             })
             .thenExecuteAfter(10, () -> helper.assertTrue(!cow.isNoAi(), "拆掉冻结器后生物应解除冻结"))
+            .thenSucceed();
+    }
+
+    // 原生 NoAI 生物：解冻应恢复冻结前的 NoAI 状态，而不是无条件唤醒
+    // （旧实现无条件 setNoAi(false)，会唤醒地图/刷怪笼的 NoAI 生物）。
+    public static void nativeNoAiMobNotAwakenedByUnfreeze(GameTestHelper helper) {
+        BlockPos freezer = new BlockPos(4, 12, 4);
+        BlockPos power = freezer.offset(1, 0, 0);
+        helper.setBlock(freezer, Moditems.GIVETAG_BLOCK.get());
+        Cow cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
+
+        helper.startSequence()
+            // 模拟原生 NoAI 生物（地图/刷怪笼生成的生物）
+            .thenExecute(() -> cow.setNoAi(true))
+            .thenExecute(() -> helper.setBlock(power, Blocks.REDSTONE_BLOCK))
+            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), "冻结中应保持 NoAI"))
+            .thenExecute(() -> helper.setBlock(power, Blocks.AIR))
+            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), "解冻不应唤醒原生 NoAI 生物"))
             .thenSucceed();
     }
 

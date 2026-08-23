@@ -1,6 +1,6 @@
 package com.huntersxy.blockd.item;
 
-import com.huntersxy.blockd.block.Givetagblock;
+import com.huntersxy.blockd.block.EntityFreezerBlock;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.neoforge.registries.DeferredBlock;
@@ -19,15 +19,15 @@ public class Moditems {
     // 旧 register(Supplier) 不会设置 id，运行时抛 "Block id not set"。
     // 26.1.2+ 移除了三参 registerBlock(String, Function, Properties) 重载，改用 Supplier 版本。
     //? if <26.1.2 {
-    public static final DeferredBlock<Givetagblock> GIVETAG_BLOCK = BLOCKS.registerBlock("givetag_block",
-        Givetagblock::new,
+    public static final DeferredBlock<EntityFreezerBlock> GIVETAG_BLOCK = BLOCKS.registerBlock("givetag_block",
+        EntityFreezerBlock::new,
         BlockBehaviour.Properties.of()
                 .strength(0.5f)  // 泥土硬度
                 // 移除 requiresCorrectToolForDrops() 使空手可掉落
         );
     //?} else {
-    /*public static final DeferredBlock<Givetagblock> GIVETAG_BLOCK = BLOCKS.registerBlock("givetag_block",
-        Givetagblock::new,
+    /*public static final DeferredBlock<EntityFreezerBlock> GIVETAG_BLOCK = BLOCKS.registerBlock("givetag_block",
+        EntityFreezerBlock::new,
         () -> BlockBehaviour.Properties.of()
                 .strength(0.5f)  // 泥土硬度
                 // 移除 requiresCorrectToolForDrops() 使空手可掉落

@@ -1,7 +1,7 @@
 package com.huntersxy.blockd.block;
 
 import com.huntersxy.blockd.Config;
-import com.huntersxy.blockd.Imixin.ILivingEntity;
+import com.huntersxy.blockd.duck.ILivingEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
@@ -24,20 +24,21 @@ import java.util.function.Consumer;
 /**
  * 实体冻结器：红石通电时冻结范围内生物，断电时解除。
  *
- * <p>修复要点：
+ * <p>实现要点：
  * <ul>
  *   <li>充能状态存入 BlockState 的 POWERED 属性（按方块位置持久化到区块），
- *       不再使用 Block 实例字段（方块是全局单例，实例字段会被所有
- *       同名方块共享，导致多个冻结器互相干扰）；</li>
+ *       不用 Block 实例字段（方块是全局单例，实例字段会被所有同名方块共享）；</li>
+ *   <li>冻结用引用计数（见 MixinLivingEntity）：范围重叠的多台冻结器各持一个引用，
+ *       全部断电才解冻，不会互相误伤；</li>
  *   <li>用 getBestNeighborSignal 检测弱信号（红石粉也能激活）；</li>
  *   <li>onPlace 处理"贴着已通电位置放置"的边沿；</li>
  *   <li>onRemove 在方块被破坏/替换时解冻范围内生物，避免永久冻结。</li>
  * </ul>
  */
-public class Givetagblock extends Block {
+public class EntityFreezerBlock extends Block {
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
 
-    public Givetagblock(Properties properties) {
+    public EntityFreezerBlock(Properties properties) {
         super(properties);
         this.registerDefaultState(this.getStateDefinition().any().setValue(POWERED, false));
     }
@@ -84,7 +85,7 @@ public class Givetagblock extends Block {
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         // 方块被破坏/替换时解冻范围内的实体，避免"拆除冻结器后生物永久冻结"
         if (!level.isClientSide && state.getValue(POWERED) && !newState.is(this)) {
-            executeCleantag(level, pos);
+            unfreezeAll(level, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
@@ -94,7 +95,7 @@ public class Givetagblock extends Block {
     protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
         // 1.21.11+ 用 affectNeighborsAfterRemoval 取代 onRemove（仅在方块被其他方块替换时触发）
         if (state.getValue(POWERED)) {
-            executeCleantag(level, pos);
+            unfreezeAll(level, pos);
         }
     }
     *///?}
@@ -108,25 +109,25 @@ public class Givetagblock extends Block {
         boolean wasPowered = state.getValue(POWERED);
         if (currentlyPowered && !wasPowered) {
             level.setBlock(pos, state.setValue(POWERED, true), 3);
-            executeGivetag(level, pos);
+            freezeAll(level, pos);
         } else if (!currentlyPowered && wasPowered) {
             level.setBlock(pos, state.setValue(POWERED, false), 3);
-            executeCleantag(level, pos);
+            unfreezeAll(level, pos);
         }
     }
 
-    private void executeGivetag(Level level, BlockPos pos) {
-        executeOperation(level, pos, this::givetag);
+    private void freezeAll(Level level, BlockPos pos) {
+        forEachMobInRange(level, pos, this::freeze);
     }
 
-    private void executeCleantag(Level level, BlockPos pos) {
-        executeOperation(level, pos, this::cleantag);
+    private void unfreezeAll(Level level, BlockPos pos) {
+        forEachMobInRange(level, pos, this::unfreeze);
     }
 
     /**
      * 在 (2*range+1)^3 范围内对所有 Mob 执行指定操作。
      */
-    private void executeOperation(Level level, BlockPos pos, Consumer<Mob> operation) {
+    private void forEachMobInRange(Level level, BlockPos pos, Consumer<Mob> operation) {
         int range = Config.givetagBlockRange;
         BlockPos startPos = pos.offset(-range, -range, -range);
         BlockPos endPos = pos.offset(range, range, range);
@@ -136,27 +137,21 @@ public class Givetagblock extends Block {
         }
     }
 
-    private void givetag(Mob mob) {
-        mob.setDeltaMovement(0, 0, 0);
-        mob.setTarget(null);
-        ((ILivingEntity) mob).blockd$set_freeze_ai(true);
+    private void freeze(Mob mob) {
+        ((ILivingEntity) mob).blockd$acquireFreeze();
     }
 
-    private void cleantag(Mob mob) {
-        ((ILivingEntity) mob).blockd$set_freeze_ai(false);
+    private void unfreeze(Mob mob) {
+        ((ILivingEntity) mob).blockd$releaseFreeze();
     }
 
     @Override
     public @Nonnull List<ItemStack> getDrops(@Nonnull BlockState state, @Nonnull LootParams.Builder builder) {
-        List<ItemStack> drops = super.getDrops(state, builder);
-        // 确保方块掉落
-        drops.clear();
+        // 本方块无 loot table，固定掉落自身（不再调用 super 取回会被丢弃的空结果）
         //? if <26.1 {
-        drops.add(new ItemStack(this));
-        //?}
-        //? if >=26.1 {
-        /*drops.add(new ItemStack(this.asItem()));
-        *///?}
-        return drops;
+        return List.of(new ItemStack(this));
+        //?} else {
+        /*return List.of(new ItemStack(this.asItem()));
+         *///?}
     }
 }
