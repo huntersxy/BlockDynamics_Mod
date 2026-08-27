@@ -6,7 +6,7 @@
   - 状态存入方块 BlockState（`POWERED`），多台冻结器互不干扰，拆方块也会解冻。
   - 冻结按引用计数：范围重叠的多台冻结器共同冻结同一生物时，其中一台断电不会误解冻，全部断电才解冻。
   - 支持弱信号（红石粉）。
-- **繁殖限制**：父代周围 17×17×17 范围内 Mob 数量超过配置上限（`maxMobsInChunk`，默认 10）时阻止产仔。
+- **繁殖限制**：父代周围 17×17×17 范围内 Mob 数量超过配置上限（`maxMobsNearby`，默认 10）时阻止产仔。
 
 ## 已知行为 / 限制
 
@@ -43,6 +43,7 @@
 ./gradlew :1.21.11-neoforge:runGameTestServer
 ./gradlew :26.1.2-neoforge:runGameTestServer
 ./gradlew :26.2-neoforge:runGameTestServer
+# push/PR 时 CI（.github/workflows/build.yml）会对全部版本自动跑 gametest
 ```
 
 > 26.1 需要 JDK 25：本地可用 `org.gradle.java.installations.paths`（写入 `~/.gradle/gradle.properties`）或 `-Porg.gradle.java.installations.fromEnv=...` 指定；CI 里已通过 setup-java 安装。
@@ -71,5 +72,5 @@
 ## 配置
 
 `blockd-common.toml`（首次启动生成）：
-- `maxMobsInChunk`：区块内生物数量上限（繁殖限制），默认 10。
+- `maxMobsNearby`：父代周围 17×17×17 范围内生物数量上限（繁殖限制），默认 10。
 - `givetagBlockRange`：冻结器作用半径，默认 8。

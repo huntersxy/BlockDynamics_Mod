@@ -185,8 +185,8 @@ public class BlockDynamicsGameTests {
     @GameTest(template = "empty", timeoutTicks = 300)
     public static void breedingLimitBlocksOverLimit(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        int oldMax = Config.maxMobsInChunk;
-        Config.maxMobsInChunk = 1; // 测试内直接覆盖静态配置
+        int oldMax = Config.maxMobsNearby;
+        Config.maxMobsNearby = 1; // 测试内直接覆盖静态配置
         try {
             Chicken a = helper.spawn(EntityType.CHICKEN, new BlockPos(5, 12, 5));
             Chicken b = helper.spawn(EntityType.CHICKEN, new BlockPos(6, 12, 5));
@@ -195,7 +195,7 @@ public class BlockDynamicsGameTests {
 
             helper.startSequence()
                 .thenExecute(() -> {
-                    Config.maxMobsInChunk = 1; // 必须在阶段内设置：方法体的赋值会被 finally 立即还原
+                    Config.maxMobsNearby = 1; // 必须在阶段内设置：方法体的赋值会被 finally 立即还原
                     AABB box = new AABB(a.blockPosition()).inflate(64);
                     long before = level.getEntitiesOfClass(Chicken.class, box).size();
                     a.spawnChildFromBreeding(level, b);
@@ -204,7 +204,7 @@ public class BlockDynamicsGameTests {
                     helper.assertTrue(after == before, "超过上限时繁殖应被阻止");
                 })
                 .thenExecute(() -> {
-                    Config.maxMobsInChunk = 100;
+                    Config.maxMobsNearby = 100;
                     AABB box = new AABB(a.blockPosition()).inflate(64);
                     long before = level.getEntitiesOfClass(Chicken.class, box).size();
                     a.spawnChildFromBreeding(level, b);
@@ -213,7 +213,7 @@ public class BlockDynamicsGameTests {
                 })
                 .thenSucceed();
         } finally {
-            Config.maxMobsInChunk = oldMax;
+            Config.maxMobsNearby = oldMax;
         }
     }
 

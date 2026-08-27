@@ -2,6 +2,7 @@ package com.huntersxy.blockd.item;
 
 import com.huntersxy.blockd.block.EntityFreezerBlock;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -23,6 +24,7 @@ public class Moditems {
         EntityFreezerBlock::new,
         BlockBehaviour.Properties.of()
                 .strength(0.5f)  // 泥土硬度
+                .sound(SoundType.METAL)  // 金属质感音效
                 // 移除 requiresCorrectToolForDrops() 使空手可掉落
         );
     //?} else {
@@ -30,6 +32,7 @@ public class Moditems {
         EntityFreezerBlock::new,
         () -> BlockBehaviour.Properties.of()
                 .strength(0.5f)  // 泥土硬度
+                .sound(SoundType.METAL)  // 金属质感音效
                 // 移除 requiresCorrectToolForDrops() 使空手可掉落
         );
      *///?}

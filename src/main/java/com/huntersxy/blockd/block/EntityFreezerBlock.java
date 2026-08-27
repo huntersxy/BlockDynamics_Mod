@@ -4,21 +4,17 @@ import com.huntersxy.blockd.Config;
 import com.huntersxy.blockd.duck.ILivingEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.AABB;
 
-import javax.annotation.Nonnull;
 //? if >=1.21.11 {
 /*import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.redstone.Orientation;
  *///?}
-import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -143,15 +139,5 @@ public class EntityFreezerBlock extends Block {
 
     private void unfreeze(Mob mob) {
         ((ILivingEntity) mob).blockd$releaseFreeze();
-    }
-
-    @Override
-    public @Nonnull List<ItemStack> getDrops(@Nonnull BlockState state, @Nonnull LootParams.Builder builder) {
-        // 本方块无 loot table，固定掉落自身（不再调用 super 取回会被丢弃的空结果）
-        //? if <26.1 {
-        return List.of(new ItemStack(this));
-        //?} else {
-        /*return List.of(new ItemStack(this.asItem()));
-         *///?}
     }
 }

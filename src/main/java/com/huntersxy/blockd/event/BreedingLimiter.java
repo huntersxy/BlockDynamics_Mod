@@ -38,11 +38,11 @@ public class BreedingLimiter {
                 .size();
 
         // 超过配置上限则取消繁殖
-        if (mobCount > Config.maxMobsInChunk) {
+        if (mobCount > Config.maxMobsNearby) {
             event.setCanceled(true);
             // 大型养殖场会频繁触发，用 debug 级别避免刷屏
             LOGGER.debug("阻止繁殖：{} 附近 17x17x17 范围内 Mob 数量 {} 超过上限 {}",
-                    parentAPos.toShortString(), mobCount, Config.maxMobsInChunk);
+                    parentAPos.toShortString(), mobCount, Config.maxMobsNearby);
         }
     }
 }
