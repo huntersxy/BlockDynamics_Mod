@@ -1,5 +1,6 @@
 {
   "variants": {
-    "": { "model": "blockd:block/givetag_block" }
+    "powered=false": { "model": "blockd:block/givetag_block" },
+    "powered=true": { "model": "blockd:block/givetag_block" }
   }
 }
