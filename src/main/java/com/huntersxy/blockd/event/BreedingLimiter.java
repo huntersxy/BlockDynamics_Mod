@@ -20,6 +20,8 @@ import static com.huntersxy.blockd.blockd.LOGGER;
  */
 @EventBusSubscriber(modid = blockd.MODID)
 public class BreedingLimiter {
+    private static final int MOB_CHECK_RANGE = 8;
+
     @SubscribeEvent
     public static void onBabySpawn(BabyEntitySpawnEvent event) {
         // 获取父代实体
@@ -30,11 +32,11 @@ public class BreedingLimiter {
 
         BlockPos parentAPos = parentA.blockPosition();
 
-        // 统计父代周围 17x17x17 范围内的生物实体数量
+        // 与冻结器保持一致，统计以父代所在方块为中心、半径 8 的完整方块范围（17×17×17）。
+        BlockPos startPos = parentAPos.offset(-MOB_CHECK_RANGE, -MOB_CHECK_RANGE, -MOB_CHECK_RANGE);
+        BlockPos endPos = parentAPos.offset(MOB_CHECK_RANGE, MOB_CHECK_RANGE, MOB_CHECK_RANGE);
         long mobCount = parentA.level()
-                .getEntitiesOfClass(Mob.class,
-                        new AABB(parentAPos.getX() - 8, parentAPos.getY() - 8, parentAPos.getZ() - 8,
-                                parentAPos.getX() + 8, parentAPos.getY() + 8, parentAPos.getZ() + 8))
+                .getEntitiesOfClass(Mob.class, AABB.encapsulatingFullBlocks(startPos, endPos))
                 .size();
 
         // 超过配置上限则取消繁殖

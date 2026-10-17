@@ -96,8 +96,9 @@ neoForge {
     }
 }
 
-// 一次构建全部版本：把各版本 jar 收集到 build/libs/<mc版本>/ 下
-tasks.register<Copy>("buildAndCollect") {
+// 一次构建全部版本：把各版本 jar 收集到 build/libs/<mc版本>/ 下。
+// 使用 Sync 清理目录中的旧版本，避免重复构建后误把历史 jar 一起分发。
+tasks.register<Sync>("buildAndCollect") {
     group = "build"
     dependsOn("build")
     from(tasks.named("jar"))
