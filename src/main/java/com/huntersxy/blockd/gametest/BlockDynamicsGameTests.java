@@ -1,6 +1,6 @@
 package com.huntersxy.blockd.gametest;
 
-//? if <1.21.11 {
+//? if <1.21.5 {
 
 import com.huntersxy.blockd.Config;
 import com.huntersxy.blockd.item.Moditems;

@@ -1,6 +1,6 @@
 package com.huntersxy.blockd.gametest;
 
-//? if >=1.21.11 {
+//? if >=1.21.5 {
 /*import com.huntersxy.blockd.blockd;
 import java.util.function.Consumer;
 import net.minecraft.core.Holder;
@@ -9,14 +9,13 @@ import net.minecraft.gametest.framework.FunctionGameTestInstance;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
-// 1.21.11+ 的 gametest 注册（新 registry 框架）：
+// 1.21.5+ 的 gametest 注册（新 registry 框架）：
 // - 测试函数（Consumer<GameTestHelper>）经 RegisterEvent 注册进 TEST_FUNCTION 内置注册表；
 // - 测试实例经 RegisterGameTestsEvent 注册进 TEST_INSTANCE 数据包注册表。
 //
@@ -57,9 +56,29 @@ public class GameTestRegistrarModern {
         registerTest(event, env, "unfreeze_clears_velocity", 300);
     }
 
-    private static Identifier id(String path) {
-        return Identifier.fromNamespaceAndPath("blockd", path);
+ *///?}
+
+    //? if >=1.21.11 {
+    /*private static net.minecraft.resources.Identifier id(String path) {
+        return id("blockd", path);
     }
+
+    static net.minecraft.resources.Identifier id(String namespace, String path) {
+        return net.minecraft.resources.Identifier.fromNamespaceAndPath(namespace, path);
+    }
+     *///?}
+    //? if >=1.21.5 && <1.21.11 {
+    /*private static net.minecraft.resources.ResourceLocation id(String path) {
+        return id("blockd", path);
+    }
+
+    static net.minecraft.resources.ResourceLocation id(String namespace, String path) {
+        return net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(namespace, path);
+    }
+     *///?}
+
+//? if >=1.21.5 {
+/*
 
     // 21.11: TestData<Holder<TestEnvironmentDefinition>>
     // 26.1:  TestData<Holder<TestEnvironmentDefinition<?>>>

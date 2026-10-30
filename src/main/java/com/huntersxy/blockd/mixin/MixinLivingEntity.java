@@ -5,7 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
-//? if >=1.21.11 {
+//? if >=1.21.6 {
 /*import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
  *///?}
@@ -86,11 +86,7 @@ public class MixinLivingEntity implements ILivingEntity {
     @Inject(method = "travel", at = @At("HEAD"), cancellable = true)
     private void blockd$freezeMovement(Vec3 travelVector, CallbackInfo ci) {
         LivingEntity self = (LivingEntity) (Object) this;
-        //? if <1.21.11 {
-        if (freezeCount > 0 && !self.level().isClientSide) {
-        //?} else {
-        /*if (freezeCount > 0 && !self.level().isClientSide()) {
-         *///?}
+        if (freezeCount > 0 && !self.level().isClientSide()) {
             self.setDeltaMovement(0, 0, 0);
             if ((Object) this instanceof Mob mob && !mob.isNoAi()) {
                 mob.setNoAi(true);
@@ -100,7 +96,7 @@ public class MixinLivingEntity implements ILivingEntity {
     }
 
     // NBT 仅在冻结中（计数 > 0）时写入，不给普通生物的存档添加多余字段。
-    //? if <1.21.11 {
+    //? if <1.21.6 {
     @Inject(method = "addAdditionalSaveData", at = @At("HEAD"))
     private void blockd$writeFreezeCountToNbt(CompoundTag nbt, CallbackInfo ci) {
         if (freezeCount > 0) {
@@ -112,14 +108,23 @@ public class MixinLivingEntity implements ILivingEntity {
     @Inject(method = "readAdditionalSaveData", at = @At("HEAD"))
     private void blockd$readFreezeCountFromNbt(CompoundTag nbt, CallbackInfo ci) {
         if (nbt.contains(NBT_FREEZE_COUNT)) {
+            //? if <1.21.5 {
             freezeCount = nbt.getInt(NBT_FREEZE_COUNT);
             frozenWasNoAi = nbt.getBoolean(NBT_WAS_NOAI);
+            //?} else {
+            /*freezeCount = nbt.getIntOr(NBT_FREEZE_COUNT, 0);
+            frozenWasNoAi = nbt.getBooleanOr(NBT_WAS_NOAI, false);
+             *///?}
         } else if (nbt.contains(NBT_FREEZE_COUNT_LEGACY)) {
+            //? if <1.21.5 {
             freezeCount = nbt.getBoolean(NBT_FREEZE_COUNT_LEGACY) ? 1 : 0;
+            //?} else {
+            /*freezeCount = nbt.getBooleanOr(NBT_FREEZE_COUNT_LEGACY, false) ? 1 : 0;
+             *///?}
         }
     }
     //?}
-    //? if 1.21.11 {
+    //? if >=1.21.6 && <26.1 {
     /*@Inject(method = "addAdditionalSaveData(Lnet/minecraft/world/level/storage/ValueOutput;)V", at = @At("TAIL"))
     private void blockd$writeFreezeCountToNbt(ValueOutput output, CallbackInfo ci) {
         if (this.freezeCount > 0) {

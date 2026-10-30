@@ -30,6 +30,10 @@ public class blockd {
         ModCreativeTabs.register(modEventBus);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
+        //? if <26.3 {
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        //?} else {
+        /*modContainer.registerConfig(ModConfig.Type.LOCAL, Config.SPEC, "blockd-common.toml");
+         *///?}
     }
 }

@@ -20,13 +20,19 @@ data class VersionInfo(
     val parchmentMappings: String? = null,
     val java: Int,
     val packFormat: Int,
+    val dataPackFormat: Int,
 )
 
 val versionInfo = mapOf(
-    "1.21.1" to VersionInfo(neoForge = "21.1.248", mcRange = "[1.21.1]", parchmentMc = "1.21.1", parchmentMappings = "2024.11.17", java = 21, packFormat = 15),
-    "1.21.11" to VersionInfo(neoForge = "21.11.42", mcRange = "[1.21.11]", parchmentMc = "1.21.11", parchmentMappings = "2025.12.20", java = 21, packFormat = 75),
-    "26.1.2" to VersionInfo(neoForge = "26.1.2.95", mcRange = "[26.1.2]", java = 25, packFormat = 84),
-    "26.2" to VersionInfo(neoForge = "26.2.0.59", mcRange = "[26.2]", java = 25, packFormat = 88),
+    "1.21.1" to VersionInfo(neoForge = "21.1.265", mcRange = "[1.21.1]", parchmentMc = "1.21.1", parchmentMappings = "2024.11.17", java = 21, packFormat = 34, dataPackFormat = 48),
+    "1.21.4" to VersionInfo(neoForge = "21.4.161", mcRange = "[1.21.4]", java = 21, packFormat = 46, dataPackFormat = 61),
+    "1.21.5" to VersionInfo(neoForge = "21.5.101", mcRange = "[1.21.5]", java = 21, packFormat = 55, dataPackFormat = 71),
+    "1.21.8" to VersionInfo(neoForge = "21.8.57", mcRange = "[1.21.8]", java = 21, packFormat = 64, dataPackFormat = 81),
+    "1.21.10" to VersionInfo(neoForge = "21.10.64", mcRange = "[1.21.10]", java = 21, packFormat = 69, dataPackFormat = 88),
+    "1.21.11" to VersionInfo(neoForge = "21.11.48", mcRange = "[1.21.11]", parchmentMc = "1.21.11", parchmentMappings = "2025.12.20", java = 21, packFormat = 75, dataPackFormat = 94),
+    "26.1.2" to VersionInfo(neoForge = "26.1.2.125", mcRange = "[26.1.2]", java = 25, packFormat = 84, dataPackFormat = 101),
+    "26.2" to VersionInfo(neoForge = "26.2.0.93", mcRange = "[26.2]", java = 25, packFormat = 88, dataPackFormat = 107),
+    "26.3" to VersionInfo(neoForge = "26.3.0.99", mcRange = "[26.3]", java = 25, packFormat = 97, dataPackFormat = 121),
 )
 val info = versionInfo[mcVersion] ?: error("Unsupported Minecraft version: $mcVersion (configured versions: ${versionInfo.keys})")
 
@@ -116,6 +122,7 @@ tasks.named<ProcessResources>("processResources") {
     dependsOn("stonecutterGenerate")
     // expand() 的值不参与 up-to-date 检查，显式声明为输入，改版本表后能自动重跑
     inputs.property("packFormat", info.packFormat)
+    inputs.property("dataPackFormat", info.dataPackFormat)
     inputs.property("modId", modId)
     inputs.property("modName", modName)
     inputs.property("modLicense", modLicense)
@@ -124,7 +131,11 @@ tasks.named<ProcessResources>("processResources") {
     inputs.property("neoVersion", info.neoForge)
     inputs.property("loaderVersionRange", loaderVersionRange)
     filesMatching("pack.mcmeta") {
-        expand("pack_format" to info.packFormat, "mod_id" to modId)
+        // 82 起只使用 min/max_format；旧字段仅声明到旧格式的最后一版 81。
+        val legacyPackMetadata = if (info.packFormat < 82)
+            "\"pack_format\": ${info.packFormat}, \"supported_formats\": [${info.packFormat}, ${minOf(info.dataPackFormat, 81)}],"
+        else ""
+        expand("pack_format" to info.packFormat, "data_pack_format" to info.dataPackFormat, "legacy_pack_metadata" to legacyPackMetadata)
     }
     filesMatching("META-INF/neoforge.mods.toml") {
         expand(

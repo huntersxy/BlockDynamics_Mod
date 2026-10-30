@@ -11,9 +11,11 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.AABB;
 
-//? if >=1.21.11 {
+//? if >=1.21.5 {
 /*import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.redstone.Orientation;
+ *///?}
+//? if >=1.21.2 {
+/*import net.minecraft.world.level.redstone.Orientation;
  *///?}
 import java.util.function.Consumer;
 
@@ -48,25 +50,21 @@ public class EntityFreezerBlock extends Block {
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
         // 放置方块本身不会触发 neighborChanged，这里补一次对拍（贴着已通电位置放置也能生效）
-        //? if <1.21.11 {
-        if (!level.isClientSide && !oldState.is(this)) {
-        //?} else {
-        /*if (!level.isClientSide() && !oldState.is(this)) {
-         *///?}
+        if (!level.isClientSide() && !oldState.is(this)) {
             reconcilePower(level, pos, state);
         }
     }
 
-    //? if <1.21.11 {
+    //? if <1.21.2 {
     @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             reconcilePower(level, pos, state);
         }
     }
     //?}
-    //? if >=1.21.11 {
+    //? if >=1.21.2 {
     /*@Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, Orientation orientation, boolean isMoving) {
         super.neighborChanged(state, level, pos, neighborBlock, orientation, isMoving);
@@ -76,20 +74,20 @@ public class EntityFreezerBlock extends Block {
     }
     *///?}
 
-    //? if <1.21.11 {
+    //? if <1.21.5 {
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         // 方块被破坏/替换时解冻范围内的实体，避免"拆除冻结器后生物永久冻结"
-        if (!level.isClientSide && state.getValue(POWERED) && !newState.is(this)) {
+        if (!level.isClientSide() && state.getValue(POWERED) && !newState.is(this)) {
             unfreezeAll(level, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
     //?}
-    //? if >=1.21.11 {
+    //? if >=1.21.5 {
     /*@Override
     protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
-        // 1.21.11+ 用 affectNeighborsAfterRemoval 取代 onRemove（仅在方块被其他方块替换时触发）
+        // 1.21.5+ 用 affectNeighborsAfterRemoval 取代 onRemove（仅在方块被其他方块替换时触发）
         if (state.getValue(POWERED)) {
             unfreezeAll(level, pos);
         }

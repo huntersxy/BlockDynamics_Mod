@@ -1,6 +1,6 @@
 package com.huntersxy.blockd.gametest;
 
-//? if <1.21.11 {
+//? if <1.21.5 {
 import com.huntersxy.blockd.blockd;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;

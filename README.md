@@ -17,16 +17,21 @@
 
 ## 支持版本
 
-一套源码编译多个版本（[Stonecutter](https://stonecutter.kikugie.dev/) + ModDevGradle 2.0.141）：
+一套源码编译多个版本（[Stonecutter](https://stonecutter.kikugie.dev/) + ModDevGradle 2.0.148），当前模组版本 **1.3.0**：
 
 | Minecraft | NeoForge | Java | Parchment |
 |---|---|---|---|
-| 1.21.1 | 21.1.248 | 21 | 2024.11.17 |
-| 1.21.11 | 21.11.42 | 21 | 2025.12.20 |
-| 26.1.2 | 26.1.2.95 | 25 | - |
-| 26.2 | 26.2.0.59 | 25 | - |
+| 1.21.1 | 21.1.265 | 21 | 2024.11.17 |
+| 1.21.4 | 21.4.161 | 21 | - |
+| 1.21.5 | 21.5.101 | 21 | - |
+| 1.21.8 | 21.8.57 | 21 | - |
+| 1.21.10 | 21.10.64 | 21 | - |
+| 1.21.11 | 21.11.48 | 21 | 2025.12.20 |
+| 26.1.2 | 26.1.2.125 | 25 | - |
+| 26.2 | 26.2.0.93 | 25 | - |
+| 26.3 | 26.3.0.99 | 25 | - |
 
-版本表在 `build.neoforge.gradle.kts` 顶部的 `versionInfo` 中，新增版本只需加一行。
+版本配置位于 `build.neoforge.gradle.kts` 顶部的 `versionInfo`；新增版本时同步修改 `settings.gradle.kts`、CI 测试矩阵与 alpha 发布列表，并核对源码 API 和资源格式。
 
 ## 构建
 
@@ -37,27 +42,29 @@
 # 只构建某个版本
 ./gradlew :1.21.1-neoforge:build
 
-# 跑 gametest（每个版本各有 9 个行为测试：冻结/解冻、双冻结器、重叠冻结器引用计数、
+# 跑全部版本的 gametest（每个版本各有 9 个模组行为测试：冻结/解冻、双冻结器、重叠冻结器引用计数、
 # 拆块解冻、原生 NoAI 保持、弱信号、繁殖限制、配方合成、解冻速度清零）
+./gradlew -Dorg.gradle.parallel=false runGameTestServer
+
+# 只验证某个版本
 ./gradlew :1.21.1-neoforge:runGameTestServer
-./gradlew :1.21.11-neoforge:runGameTestServer
-./gradlew :26.1.2-neoforge:runGameTestServer
-./gradlew :26.2-neoforge:runGameTestServer
+./gradlew :26.3-neoforge:runGameTestServer
 # push/PR 时 CI（.github/workflows/build.yml）会对全部版本自动跑 gametest
 ```
 
-> 26.1 需要 JDK 25：本地可用 `org.gradle.java.installations.paths`（写入 `~/.gradle/gradle.properties`）或 `-Porg.gradle.java.installations.fromEnv=...` 指定；CI 里已通过 setup-java 安装。
+> 1.21 系列需要 JDK 21，26.1.2 / 26.2 / 26.3 需要 JDK 25：本地可用 `org.gradle.java.installations.paths`（写入 `~/.gradle/gradle.properties`）或 `-Porg.gradle.java.installations.fromEnv=...` 指定；CI 里已通过 setup-java 安装。
 
 ### 版本差异与条件注释
 
-不同版本间的 API 差异用 Stonecutter 的 `//? if` 条件注释写在源码里（例如 `neighborChanged` 的 6/7 参数签名、NBT 读写 API、`isClientSide` 字段/方法、`new ItemStack(this)` 等）。**仓库里的源码始终处于 `stonecutter active` 版本（1.21.1）的状态**：1.21.1 分支的代码保持普通代码，其他版本分支用块注释包住；切版本/编译其他版本时由 Stonecutter 自动重写。
+不同版本间的 API 差异用 Stonecutter 的 `//? if` 条件注释写在源码里（例如 `neighborChanged` 的位置/方向参数、方块移除回调、NBT 读写 API、标识符类名及配置类型）。**仓库里的源码始终处于 `stonecutter active` 版本（1.21.1）的状态**：1.21.1 分支的代码保持普通代码，其他版本分支用块注释包住；切版本/编译其他版本时由 Stonecutter 自动重写。
 
 规则：
 - 修改源码时保持"当前 active 版本分支为普通代码、其余分支为 `/* ... */` 块注释"的格式，否则 active 版本编译会失败；
 - 编译非 active 版本时，Stonecutter 会处理根目录 `src/main` 并生成 `versions/<id>/build/generated/stonecutter` 供该版本编译使用。
-- 某些资源（如配方 JSON 的 ingredient 格式在 1.21.11 变了）需要按版本区分时，把覆盖文件放进 `versions/<mc>/src/main/resources/...`，Stonecutter 会把它合并进该版本的构建（active 版本用根目录文件）。
+- 某些资源（如配方 JSON 的 ingredient 格式在 1.21.2 变了）需要按版本区分时，把覆盖文件放进 `versions/<mc>-neoforge/src/main/resources/...`，Stonecutter 会把它合并进该版本的构建（active 版本用根目录文件）。
+- 资源包与数据包格式按各版本官方 `version.json` 配置到 `versionInfo`；共用的 `pack.mcmeta` 声明两者的兼容范围。全部目标版本使用单数 `loot_table` 目录。
 - **注意：被 `//? if` 门控包裹的源码区域里不能出现块注释（`/* */`，javadoc 也算），否则 stitcher 解析会报 Unclosed scope。**
-- gametest 分两套：`BlockDynamicsGameTests`（1.21.1 旧框架，`<1.21.11` 门控）和 `BlockDynamicsGameTestsModern` + `GameTestRegistrarModern`（1.21.11+ 新 registry 框架，`>=1.21.11` 门控）；测试内容一致。
+- gametest 分两套：`BlockDynamicsGameTests`（1.21.1 / 1.21.4 旧框架，`<1.21.5` 门控）和 `BlockDynamicsGameTestsModern` + `GameTestRegistrarModern`（1.21.5+ 新 registry 框架，`>=1.21.5` 门控）；测试内容一致。
 
 ## 分支策略（旧版废弃）
 
@@ -74,3 +81,5 @@
 `blockd-common.toml`（首次启动生成）：
 - `maxMobsNearby`：父代周围 17×17×17 范围内生物数量上限（繁殖限制），默认 10。
 - `givetagBlockRange`：冻结器作用半径，默认 8。
+
+26.3 起 NeoForge 将 `COMMON` 配置类型改为 `LOCAL`；模组继续使用相同的文件名与配置键，可沿用已有配置。

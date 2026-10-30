@@ -1,34 +1,34 @@
 package com.huntersxy.blockd.gametest;
 
-//? if >=1.21.11 {
+//? if >=1.21.5 {
 /*import com.huntersxy.blockd.Config;
 import com.huntersxy.blockd.item.Moditems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.animal.chicken.Chicken;
-import net.minecraft.world.entity.animal.cow.Cow;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeverBlock;
-import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.RedstoneSide;
 import net.minecraft.world.phys.AABB;
 
-// 1.21.11+ 新 gametest 框架下的行为测试（注册见 GameTestRegistrarModern）。
+// 1.21.5+ 新 gametest 框架下的行为测试（注册见 GameTestRegistrarModern）。
 public class BlockDynamicsGameTestsModern {
     // 按注册表 id 取实体类型：EntityType.COW/CHICKEN 常量在 26.2 移到了 EntityTypes 类，
-    // 用 BuiltInRegistries 查询对所有 21.11+ 版本通用（避免引入嵌套的版本标记）。
+    // 用 BuiltInRegistries 查询对所有 1.21.5+ 版本通用（避免引入嵌套的版本标记）。
     @SuppressWarnings("unchecked")
     private static <E extends Entity> EntityType<E> entityType(String id) {
-        return (EntityType<E>) BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.fromNamespaceAndPath("minecraft", id));
+        return (EntityType<E>) BuiltInRegistries.ENTITY_TYPE.getValue(GameTestRegistrarModern.id("minecraft", id));
     }
 
     // 通电→冻结（NoAI + 完全静止）；断电→解冻（恢复重力下落）。
@@ -36,20 +36,20 @@ public class BlockDynamicsGameTestsModern {
         BlockPos freezer = new BlockPos(4, 12, 4);
         BlockPos power = freezer.offset(1, 0, 0);
         helper.setBlock(freezer, Moditems.GIVETAG_BLOCK.get());
-        Cow cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
+        Mob cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
         final double[] yBeforeFreeze = new double[1];
 
         helper.startSequence()
             .thenExecuteAfter(10, () -> yBeforeFreeze[0] = cow.getY())
             .thenExecute(() -> helper.setBlock(power, Blocks.REDSTONE_BLOCK))
             .thenExecuteAfter(20, () -> {
-                helper.assertTrue(cow.isNoAi(), "通电后生物应被冻结 (NoAI)");
-                helper.assertTrue(Math.abs(cow.getY() - yBeforeFreeze[0]) < 0.5, "通电后生物不应移动");
+                helper.assertTrue(cow.isNoAi(), Component.literal("通电后生物应被冻结 (NoAI)"));
+                helper.assertTrue(Math.abs(cow.getY() - yBeforeFreeze[0]) < 0.5, Component.literal("通电后生物不应移动"));
             })
             .thenExecute(() -> helper.setBlock(power, Blocks.AIR))
             .thenExecuteAfter(30, () -> {
-                helper.assertTrue(!cow.isNoAi(), "断电后生物应解除冻结");
-                helper.assertTrue(cow.getY() < yBeforeFreeze[0] - 1.0, "断电后生物应受重力下落");
+                helper.assertTrue(!cow.isNoAi(), Component.literal("断电后生物应解除冻结"));
+                helper.assertTrue(cow.getY() < yBeforeFreeze[0] - 1.0, Component.literal("断电后生物应受重力下落"));
             })
             .thenSucceed();
     }
@@ -62,8 +62,8 @@ public class BlockDynamicsGameTestsModern {
         BlockPos powerB = freezerB.offset(1, 0, 0);
         helper.setBlock(freezerA, Moditems.GIVETAG_BLOCK.get());
         helper.setBlock(freezerB, Moditems.GIVETAG_BLOCK.get());
-        Cow cowA = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
-        Cow cowB = helper.spawn(entityType("cow"), new BlockPos(21, 12, 6));
+        Mob cowA = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
+        Mob cowB = helper.spawn(entityType("cow"), new BlockPos(21, 12, 6));
 
         helper.startSequence()
             .thenExecute(() -> {
@@ -71,18 +71,18 @@ public class BlockDynamicsGameTestsModern {
                 helper.setBlock(powerB, Blocks.REDSTONE_BLOCK);
             })
             .thenExecuteAfter(10, () -> {
-                helper.assertTrue(cowA.isNoAi(), "A 应被冻结");
-                helper.assertTrue(cowB.isNoAi(), "B 应被冻结");
+                helper.assertTrue(cowA.isNoAi(), Component.literal("A 应被冻结"));
+                helper.assertTrue(cowB.isNoAi(), Component.literal("B 应被冻结"));
             })
             // 关键场景：给 B 断电（A 仍通电）——旧代码会把全局 isPowered 置 false
             .thenExecute(() -> helper.setBlock(powerB, Blocks.AIR))
             .thenExecuteAfter(10, () -> {
-                helper.assertTrue(cowA.isNoAi(), "A 不应受 B 断电影响");
-                helper.assertTrue(!cowB.isNoAi(), "B 应解除冻结");
+                helper.assertTrue(cowA.isNoAi(), Component.literal("A 不应受 B 断电影响"));
+                helper.assertTrue(!cowB.isNoAi(), Component.literal("B 应解除冻结"));
             })
             // 现在给 A 断电——旧代码因 isPowered 已被置 false 而不触发，A 会永久冻结
             .thenExecute(() -> helper.setBlock(powerA, Blocks.AIR))
-            .thenExecuteAfter(10, () -> helper.assertTrue(!cowA.isNoAi(), "A 断电后应解除冻结"))
+            .thenExecuteAfter(10, () -> helper.assertTrue(!cowA.isNoAi(), Component.literal("A 断电后应解除冻结")))
             .thenSucceed();
     }
 
@@ -95,20 +95,20 @@ public class BlockDynamicsGameTestsModern {
         BlockPos powerB = freezerB.offset(1, 0, 0);
         helper.setBlock(freezerA, Moditems.GIVETAG_BLOCK.get());
         helper.setBlock(freezerB, Moditems.GIVETAG_BLOCK.get());
-        Cow cow = helper.spawn(entityType("cow"), new BlockPos(6, 12, 6)); // 两台共同覆盖
+        Mob cow = helper.spawn(entityType("cow"), new BlockPos(6, 12, 6)); // 两台共同覆盖
 
         helper.startSequence()
             .thenExecute(() -> helper.setBlock(powerA, Blocks.REDSTONE_BLOCK))
-            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), "A 通电后生物应被冻结"))
+            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), Component.literal("A 通电后生物应被冻结")))
             // B 也通电：同一生物被两台冻结器共同冻结（计数 2）
             .thenExecute(() -> helper.setBlock(powerB, Blocks.REDSTONE_BLOCK))
-            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), "B 通电后生物仍应冻结"))
+            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), Component.literal("B 通电后生物仍应冻结")))
             // 关键场景：B 断电（A 仍通电）——boolean 实现会错误解冻共同范围内的生物
             .thenExecute(() -> helper.setBlock(powerB, Blocks.AIR))
-            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), "B 断电后 A 仍通电，生物不应解冻"))
+            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), Component.literal("B 断电后 A 仍通电，生物不应解冻")))
             // A 也断电：最后一个引用释放，才真正解冻
             .thenExecute(() -> helper.setBlock(powerA, Blocks.AIR))
-            .thenExecuteAfter(10, () -> helper.assertTrue(!cow.isNoAi(), "全部断电后生物应解除冻结"))
+            .thenExecuteAfter(10, () -> helper.assertTrue(!cow.isNoAi(), Component.literal("全部断电后生物应解除冻结")))
             .thenSucceed();
     }
 
@@ -117,16 +117,16 @@ public class BlockDynamicsGameTestsModern {
         BlockPos freezer = new BlockPos(4, 12, 4);
         BlockPos power = freezer.offset(1, 0, 0);
         helper.setBlock(freezer, Moditems.GIVETAG_BLOCK.get());
-        Cow cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
+        Mob cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
 
         helper.startSequence()
             .thenExecute(() -> helper.setBlock(power, Blocks.REDSTONE_BLOCK))
-            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), "前置：生物应先被冻结"))
+            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), Component.literal("前置：生物应先被冻结")))
             .thenExecute(() -> {
                 helper.setBlock(freezer, Blocks.AIR);
                 helper.setBlock(power, Blocks.AIR);
             })
-            .thenExecuteAfter(10, () -> helper.assertTrue(!cow.isNoAi(), "拆掉冻结器后生物应解除冻结"))
+            .thenExecuteAfter(10, () -> helper.assertTrue(!cow.isNoAi(), Component.literal("拆掉冻结器后生物应解除冻结")))
             .thenSucceed();
     }
 
@@ -136,15 +136,15 @@ public class BlockDynamicsGameTestsModern {
         BlockPos freezer = new BlockPos(4, 12, 4);
         BlockPos power = freezer.offset(1, 0, 0);
         helper.setBlock(freezer, Moditems.GIVETAG_BLOCK.get());
-        Cow cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
+        Mob cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
 
         helper.startSequence()
             // 模拟原生 NoAI 生物（地图/刷怪笼生成的生物）
             .thenExecute(() -> cow.setNoAi(true))
             .thenExecute(() -> helper.setBlock(power, Blocks.REDSTONE_BLOCK))
-            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), "冻结中应保持 NoAI"))
+            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), Component.literal("冻结中应保持 NoAI")))
             .thenExecute(() -> helper.setBlock(power, Blocks.AIR))
-            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), "解冻不应唤醒原生 NoAI 生物"))
+            .thenExecuteAfter(10, () -> helper.assertTrue(cow.isNoAi(), Component.literal("解冻不应唤醒原生 NoAI 生物")))
             .thenSucceed();
     }
 
@@ -154,7 +154,7 @@ public class BlockDynamicsGameTestsModern {
         BlockPos dust = freezer.offset(1, 0, 0);
         BlockPos stone = freezer.offset(1, 0, 1);
         helper.setBlock(freezer, Moditems.GIVETAG_BLOCK.get());
-        Cow cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
+        Mob cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
 
         helper.startSequence()
             // 石头 + 通电拉杆（FACE=FLOOR 附着在石头上，强充能石头）
@@ -169,12 +169,12 @@ public class BlockDynamicsGameTestsModern {
             // 等价于玩家放置的效果：西侧连上冻结器（full 方块），东侧连上石头。
             .thenExecute(() -> {
                 BlockState wireState = Blocks.REDSTONE_WIRE.defaultBlockState()
-                        .setValue(RedStoneWireBlock.PROPERTY_BY_DIRECTION.get(Direction.WEST), RedstoneSide.UP)
-                        .setValue(RedStoneWireBlock.PROPERTY_BY_DIRECTION.get(Direction.EAST), RedstoneSide.UP);
+                        .setValue(BlockStateProperties.WEST_REDSTONE, RedstoneSide.UP)
+                        .setValue(BlockStateProperties.EAST_REDSTONE, RedstoneSide.UP);
                 helper.setBlock(dust, wireState);
             })
             // 粉线只对冻结器输出弱信号（强供电为 0），getBestNeighborSignal 应能识别
-            .thenExecuteAfter(20, () -> helper.assertTrue(cow.isNoAi(), "弱信号也应激活冻结器"))
+            .thenExecuteAfter(20, () -> helper.assertTrue(cow.isNoAi(), Component.literal("弱信号也应激活冻结器")))
             .thenSucceed();
     }
 
@@ -184,8 +184,8 @@ public class BlockDynamicsGameTestsModern {
         int oldMax = Config.maxMobsNearby;
         Config.maxMobsNearby = 1; // 测试内直接覆盖静态配置
         try {
-            Chicken a = helper.spawn(entityType("chicken"), new BlockPos(5, 12, 5));
-            Chicken b = helper.spawn(entityType("chicken"), new BlockPos(6, 12, 5));
+            Animal a = helper.spawn(entityType("chicken"), new BlockPos(5, 12, 5));
+            Animal b = helper.spawn(entityType("chicken"), new BlockPos(6, 12, 5));
             helper.spawn(entityType("cow"), new BlockPos(5, 12, 6)); // 第 3 只
             helper.spawn(entityType("cow"), new BlockPos(6, 12, 6)); // 第 4 只
 
@@ -193,19 +193,19 @@ public class BlockDynamicsGameTestsModern {
                 .thenExecute(() -> {
                     Config.maxMobsNearby = 1; // 必须在阶段内设置：方法体的赋值会被 finally 立即还原
                     AABB box = new AABB(a.blockPosition()).inflate(64);
-                    long before = level.getEntitiesOfClass(Chicken.class, box).size();
+                    long before = level.getEntitiesOfClass(Animal.class, box, animal -> animal.getType() == a.getType()).size();
                     a.spawnChildFromBreeding(level, b);
-                    long after = level.getEntitiesOfClass(Chicken.class, box).size();
-                    helper.assertTrue(before >= 2, "前置：父代应存在");
-                    helper.assertTrue(after == before, "超过上限时繁殖应被阻止");
+                    long after = level.getEntitiesOfClass(Animal.class, box, animal -> animal.getType() == a.getType()).size();
+                    helper.assertTrue(before >= 2, Component.literal("前置：父代应存在"));
+                    helper.assertTrue(after == before, Component.literal("超过上限时繁殖应被阻止"));
                 })
                 .thenExecute(() -> {
                     Config.maxMobsNearby = 100;
                     AABB box = new AABB(a.blockPosition()).inflate(64);
-                    long before = level.getEntitiesOfClass(Chicken.class, box).size();
+                    long before = level.getEntitiesOfClass(Animal.class, box, animal -> animal.getType() == a.getType()).size();
                     a.spawnChildFromBreeding(level, b);
-                    long after = level.getEntitiesOfClass(Chicken.class, box).size();
-                    helper.assertTrue(after == before + 1, "未超上限时繁殖应成功");
+                    long after = level.getEntitiesOfClass(Animal.class, box, animal -> animal.getType() == a.getType()).size();
+                    helper.assertTrue(after == before + 1, Component.literal("未超上限时繁殖应成功"));
                 })
                 .thenSucceed();
         } finally {
@@ -216,8 +216,8 @@ public class BlockDynamicsGameTestsModern {
     // 配方合成测试：9 个鸡蛋应能按配方合成冻结器（验证配方 JSON 可解析且可匹配）。
     public static void recipeCraftsFreezer(GameTestHelper helper) {
         ItemStack result = RecipeCraftTest.craft(helper);
-        helper.assertTrue(!result.isEmpty(), "冻结器配方应存在且能解析匹配");
-        helper.assertTrue(result.is(Moditems.GIVETAG_BLOCK_ITEM.get()), "合成结果应为冻结器方块");
+        helper.assertTrue(!result.isEmpty(), Component.literal("冻结器配方应存在且能解析匹配"));
+        helper.assertTrue(result.is(Moditems.GIVETAG_BLOCK_ITEM.get()), Component.literal("合成结果应为冻结器方块"));
         helper.succeed();
     }
 
@@ -227,14 +227,14 @@ public class BlockDynamicsGameTestsModern {
         BlockPos freezer = new BlockPos(4, 12, 4);
         BlockPos power = freezer.offset(1, 0, 0);
         helper.setBlock(freezer, Moditems.GIVETAG_BLOCK.get());
-        Cow cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
+        Mob cow = helper.spawn(entityType("cow"), new BlockPos(4, 12, 6));
         final double[] x0 = new double[1];
         final double[] y0 = new double[1];
 
         helper.startSequence()
             .thenExecute(() -> helper.setBlock(power, Blocks.REDSTONE_BLOCK))
             .thenExecuteAfter(10, () -> {
-                helper.assertTrue(cow.isNoAi(), "前置：生物应先被冻结");
+                helper.assertTrue(cow.isNoAi(), Component.literal("前置：生物应先被冻结"));
                 x0[0] = cow.getX();
                 y0[0] = cow.getY();
             })
@@ -244,10 +244,10 @@ public class BlockDynamicsGameTestsModern {
             .thenExecute(() -> helper.setBlock(power, Blocks.AIR))
             // 解冻后：不应有水平位移（残留冲量未被结算）
             .thenExecuteAfter(1, () -> {
-                helper.assertTrue(!cow.isNoAi(), "断电后生物应解除冻结");
-                helper.assertTrue(Math.abs(cow.getX() - x0[0]) < 0.01, "解冻瞬间不应有水平位移（速度矢量应保持为 0）");
+                helper.assertTrue(!cow.isNoAi(), Component.literal("断电后生物应解除冻结"));
+                helper.assertTrue(Math.abs(cow.getX() - x0[0]) < 0.01, Component.literal("解冻瞬间不应有水平位移（速度矢量应保持为 0）"));
             })
-            .thenExecuteAfter(30, () -> helper.assertTrue(cow.getY() < y0[0] - 1.0, "解冻后生物应受重力下落"))
+            .thenExecuteAfter(30, () -> helper.assertTrue(cow.getY() < y0[0] - 1.0, Component.literal("解冻后生物应受重力下落")))
             .thenSucceed();
     }
 }
