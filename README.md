@@ -21,15 +21,25 @@
 
 | Minecraft | NeoForge | Java | Parchment |
 |---|---|---|---|
+| 1.21 | 21.0.167 | 21 | - |
 | 1.21.1 | 21.1.265 | 21 | 2024.11.17 |
+| 1.21.2 | 21.2.1-beta | 21 | - |
+| 1.21.3 | 21.3.100 | 21 | - |
 | 1.21.4 | 21.4.161 | 21 | - |
 | 1.21.5 | 21.5.101 | 21 | - |
+| 1.21.6 | 21.6.20-beta | 21 | - |
+| 1.21.7 | 21.7.25-beta | 21 | - |
 | 1.21.8 | 21.8.57 | 21 | - |
+| 1.21.9 | 21.9.16-beta | 21 | - |
 | 1.21.10 | 21.10.64 | 21 | - |
 | 1.21.11 | 21.11.48 | 21 | 2025.12.20 |
+| 26.1 | 26.1.0.19-beta | 25 | - |
+| 26.1.1 | 26.1.1.15-beta | 25 | - |
 | 26.1.2 | 26.1.2.125 | 25 | - |
 | 26.2 | 26.2.0.93 | 25 | - |
 | 26.3 | 26.3.0.99 | 25 | - |
+
+> 1.21.2 / 1.21.6 / 1.21.7 / 1.21.9 / 26.1 / 26.1.1 这几个版本 NeoForge 官方只发布过 beta 构建（下一个正式版跟进太快），上表取该版本线的最新构建。
 
 版本配置位于 `build.neoforge.gradle.kts` 顶部的 `versionInfo`；新增版本时同步修改 `settings.gradle.kts`、CI 测试矩阵与 alpha 发布列表，并核对源码 API 和资源格式。
 
@@ -52,7 +62,7 @@
 # push/PR 时 CI（.github/workflows/build.yml）会对全部版本自动跑 gametest
 ```
 
-> 1.21 系列需要 JDK 21，26.1.2 / 26.2 / 26.3 需要 JDK 25：本地可用 `org.gradle.java.installations.paths`（写入 `~/.gradle/gradle.properties`）或 `-Porg.gradle.java.installations.fromEnv=...` 指定；CI 里已通过 setup-java 安装。
+> 1.21 系列需要 JDK 21，26.1 系列 / 26.2 / 26.3 需要 JDK 25：本地可用 `org.gradle.java.installations.paths`（写入 `~/.gradle/gradle.properties`）或 `-Porg.gradle.java.installations.fromEnv=...` 指定；CI 里已通过 setup-java 安装。
 
 ### 版本差异与条件注释
 

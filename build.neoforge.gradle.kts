@@ -23,13 +23,23 @@ data class VersionInfo(
     val dataPackFormat: Int,
 )
 
+// 各 NeoForge pin 取该版本线当前最新构建。1.21.2 / 1.21.6 / 1.21.7 / 1.21.9 与
+// 26.1 / 26.1.1 这几条线 NeoForge 只发过 beta（下个正式版跟进太快），没有稳定版可用。
 val versionInfo = mapOf(
+    "1.21" to VersionInfo(neoForge = "21.0.167", mcRange = "[1.21]", java = 21, packFormat = 34, dataPackFormat = 48),
     "1.21.1" to VersionInfo(neoForge = "21.1.265", mcRange = "[1.21.1]", parchmentMc = "1.21.1", parchmentMappings = "2024.11.17", java = 21, packFormat = 34, dataPackFormat = 48),
+    "1.21.2" to VersionInfo(neoForge = "21.2.1-beta", mcRange = "[1.21.2]", java = 21, packFormat = 42, dataPackFormat = 57),
+    "1.21.3" to VersionInfo(neoForge = "21.3.100", mcRange = "[1.21.3]", java = 21, packFormat = 42, dataPackFormat = 57),
     "1.21.4" to VersionInfo(neoForge = "21.4.161", mcRange = "[1.21.4]", java = 21, packFormat = 46, dataPackFormat = 61),
     "1.21.5" to VersionInfo(neoForge = "21.5.101", mcRange = "[1.21.5]", java = 21, packFormat = 55, dataPackFormat = 71),
+    "1.21.6" to VersionInfo(neoForge = "21.6.20-beta", mcRange = "[1.21.6]", java = 21, packFormat = 63, dataPackFormat = 80),
+    "1.21.7" to VersionInfo(neoForge = "21.7.25-beta", mcRange = "[1.21.7]", java = 21, packFormat = 64, dataPackFormat = 81),
     "1.21.8" to VersionInfo(neoForge = "21.8.57", mcRange = "[1.21.8]", java = 21, packFormat = 64, dataPackFormat = 81),
+    "1.21.9" to VersionInfo(neoForge = "21.9.16-beta", mcRange = "[1.21.9]", java = 21, packFormat = 69, dataPackFormat = 88),
     "1.21.10" to VersionInfo(neoForge = "21.10.64", mcRange = "[1.21.10]", java = 21, packFormat = 69, dataPackFormat = 88),
     "1.21.11" to VersionInfo(neoForge = "21.11.48", mcRange = "[1.21.11]", parchmentMc = "1.21.11", parchmentMappings = "2025.12.20", java = 21, packFormat = 75, dataPackFormat = 94),
+    "26.1" to VersionInfo(neoForge = "26.1.0.19-beta", mcRange = "[26.1]", java = 25, packFormat = 84, dataPackFormat = 101),
+    "26.1.1" to VersionInfo(neoForge = "26.1.1.15-beta", mcRange = "[26.1.1]", java = 25, packFormat = 84, dataPackFormat = 101),
     "26.1.2" to VersionInfo(neoForge = "26.1.2.125", mcRange = "[26.1.2]", java = 25, packFormat = 84, dataPackFormat = 101),
     "26.2" to VersionInfo(neoForge = "26.2.0.93", mcRange = "[26.2]", java = 25, packFormat = 88, dataPackFormat = 107),
     "26.3" to VersionInfo(neoForge = "26.3.0.99", mcRange = "[26.3]", java = 25, packFormat = 97, dataPackFormat = 121),
